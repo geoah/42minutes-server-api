@@ -1,11 +1,17 @@
 package main
 
 import (
+	"database/sql"
 	. "github.com/42minutes/api/models"
 	. "github.com/42minutes/api/stores"
 	"github.com/codegangsta/martini-contrib/encoder"
+	"github.com/coopernurse/gorp"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/cors"
+	_ "github.com/ziutek/mymysql/autorc"
+	_ "github.com/ziutek/mymysql/godrv"
+	_ "github.com/ziutek/mymysql/mysql"
+	_ "github.com/ziutek/mymysql/thrsafe"
 	"log"
 	"net/http"
 )
@@ -19,9 +25,14 @@ var config struct {
 }
 
 func init() {
+	// initialize the DbMap
+	dbmap := initDb()
+	// defer dbmap.Db.Close()
+
 	// Initialize store
 	store = &SeriesStore{
-		M: make(map[uint64]*Series),
+		M:  make(map[uint64]*Series),
+		Db: dbmap,
 	}
 
 	// Initialize martini
@@ -61,5 +72,32 @@ func main() {
 	// Startup HTTP server
 	if err := http.ListenAndServe(":8000", m); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func initDb() *gorp.DbMap {
+	// connect to db using standard Go database/sql API
+	// use whatever database/sql driver you wish
+	db, err := sql.Open("mymysql", "tcp:localhost:3306*42minutes/root/root")
+	checkErr(err, "sql.Open failed")
+
+	// construct a gorp DbMap
+	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
+
+	// add a table, setting the table name to 'posts' and
+	// specifying that the Id property is an auto incrementing PK
+	dbmap.AddTableWithName(Series{}, "series").SetKeys(false, "id")
+
+	// create the table. in a production system you'd generally
+	// use a migration tool, or create the tables via scripts
+	err = dbmap.CreateTablesIfNotExists()
+	checkErr(err, "Create tables failed")
+
+	return dbmap
+}
+
+func checkErr(err error, msg string) {
+	if err != nil {
+		log.Fatalln(msg, err)
 	}
 }

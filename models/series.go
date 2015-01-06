@@ -7,18 +7,18 @@ import (
 )
 
 type Series struct {
-	ID          uint64
-	Matched     bool
-	ImdbID      string
-	Status      string
-	SeriesID    string
-	SeriesName  string
-	Language    string
-	LastUpdated string
-	Episodes    map[string]*Episode
-	LocalName   string
-	LocalPath   string
-	Poster      string
+	ID          uint64              `db:"id"`
+	Matched     bool                `db:"-"`
+	ImdbID      string              `db:"imdbid"`
+	Status      string              `db:"status"`
+	SeriesID    string              `db:"-"`
+	SeriesName  string              `db:"name"`
+	Language    string              `db:"language"`
+	LastUpdated string              `db:"-"`
+	Episodes    map[string]*Episode `db:"-"`
+	LocalName   string              `db:"-"`
+	LocalPath   string              `db:"-"`
+	Poster      string              `db:"-"`
 }
 
 func (s *Series) mapInfo(series tvdb.Series) {

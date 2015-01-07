@@ -32,11 +32,11 @@ func GetDbSession() *gorp.DbMap {
 
 	// add tables
 	dbmap.AddTableWithName(Show{}, "shows").SetKeys(false, "id")
-	dbmap.AddTableWithName(Episode{}, "episodes").SetKeys(false, "id")
-	dbmap.AddTableWithName(Season{}, "seasons").SetKeys(false, "id")
+	dbmap.AddTableWithName(Season{}, "seasons").SetKeys(false, "show_id", "season")
+	dbmap.AddTableWithName(Episode{}, "episodes").SetKeys(false, "show_id", "season", "episode")
 	dbmap.AddTableWithName(UserShow{}, "users_shows").SetKeys(false, "user_id", "show_id")
-	dbmap.AddTableWithName(UserSeason{}, "users_seasons").SetKeys(false, "user_id", "season_id")
-	dbmap.AddTableWithName(UserEpisode{}, "users_episodes").SetKeys(false, "user_id", "episode_id")
+	dbmap.AddTableWithName(UserSeason{}, "users_seasons").SetKeys(false, "user_id", "show_id", "season_id")
+	dbmap.AddTableWithName(UserEpisode{}, "users_episodes").SetKeys(false, "user_id", "show_id", "season_id", "episode_id")
 
 	// create the table. in a production system you'd generally
 	// use a migration tool, or create the tables via scripts

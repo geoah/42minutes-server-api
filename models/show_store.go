@@ -2,35 +2,37 @@ package models
 
 import (
 	"database/sql"
-	// "fmt"
 	"github.com/coopernurse/gorp"
 	"log"
-	// "github.com/hobeone/gotrakt"
-	// "sync"
 )
+
+type Model interface {
+}
 
 // The Store interface defines methods to manipulate items.
 type Store interface {
 	Get(id int) (*Show, error)
 	GetOrRetrieve(id int) (*Show, error)
 	GetAll() ([]Show, error)
-	Insert(p *Show) (int, error)
-	Update(p *Show) (int, error)
+	Upsert(p *Show) (int, error)
 	Delete(p *Show) (int, error)
-	// FindAllByName(name string, maxResults int) []*Show
 }
 
 type ShowStore struct {
-	// Trakt *gotrakt.TraktTV
 	Db *gorp.DbMap
 }
 
 // GetAll returns all Shows
 func (store *ShowStore) GetAll() ([]Show, error) {
-	var shows []Show
-	_, err := store.Db.Select(&shows, "select * from shows order by id desc")
+	var shows []Show = make([]Show, 0)
+	var showsTemp []Show
+	_, err := store.Db.Select(&showsTemp, "select id from shows order by id desc")
 	if err != nil {
 		return nil, err
+	}
+	for _, show := range showsTemp {
+		ashow, _ := store.Get(show.ID)
+		shows = append(shows, *ashow)
 	}
 	return shows, nil
 }
@@ -42,6 +44,19 @@ func (store *ShowStore) Get(id int) (*Show, error) {
 	if err != nil {
 		return nil, err
 	}
+	show.Seasons = make([]Season, 0)
+	_, err = store.Db.Select(&show.Seasons, "select * from seasons where show_id=?", show.ID)
+	if err != nil {
+		log.Println("Error while filling in seasons", err)
+	}
+	for season_i, season := range show.Seasons {
+		// this is required as rance copies the records
+		show.Seasons[season_i].Episodes = make([]Episode, 0)
+		_, err = store.Db.Select(&show.Seasons[season_i].Episodes, "select * from episodes where show_id=? and season=?", show.ID, season.Season)
+		if err != nil {
+			log.Println("Error while filling in episodes", err)
+		}
+	}
 	return &show, nil
 }
 
@@ -51,7 +66,7 @@ func (store *ShowStore) GetOrRetrieve(id int) (*Show, error) {
 	err := store.Db.SelectOne(&show, "select * from shows where id=?", id)
 	if err == sql.ErrNoRows {
 		show.UpdateInfoByTvdbID(id)
-		store.Insert(&show)
+		store.Upsert(&show)
 	} else if err != nil {
 		log.Println("TODO error", err)
 		// show.UpdateInfoByTvdbID(id)
@@ -61,21 +76,36 @@ func (store *ShowStore) GetOrRetrieve(id int) (*Show, error) {
 	return &show, nil
 }
 
-// Insert stores a new Show and returns nil
-func (store *ShowStore) Insert(show *Show) (int, error) {
-	err := store.Db.Insert(show)
-	if err != nil {
-		log.Println(err)
-		return 0, err
+// Upsert inserts or updates a Show and returns count of inserted/updated records
+func (store *ShowStore) Upsert(show *Show) (int, error) {
+	log.Printf("Trying to upsert show:%d", show.ID)
+	err := store.Db.SelectOne(&show, "select * from shows where id=?", show.ID)
+	if err == sql.ErrNoRows {
+		log.Printf("Trying to insert show:%d", show.ID)
+		store.Db.Insert(show)
+		// TODO Check errors
+	} else if err != nil {
+		log.Println("TODO error 3", err)
 	}
-	return 1, nil
-}
-
-// Update updates Show and returns count of updated records
-func (store *ShowStore) Update(show *Show) (int, error) {
-	_, err := store.Db.Update(show)
-	if err != nil {
-		return 0, err
+	for _, season := range show.Seasons {
+		err := store.Db.SelectOne(&show, "select * from seasons where show_id=? and season=?", show.ID, season.Season)
+		if err == sql.ErrNoRows {
+			log.Printf("Trying to insert season:%d:%d", show.ID, season.Season)
+			store.Db.Insert(&season)
+			// TODO Check errors
+			for _, episode := range season.Episodes {
+				err := store.Db.SelectOne(&show, "select * from episodes where show_id=? and season=? and episode=?", show.ID, season.Season, episode.Episode)
+				if err == sql.ErrNoRows {
+					log.Printf("Trying to insert episode:%d:%d:%d", show.ID, season.Season, episode.Episode)
+					store.Db.Insert(&episode)
+					// TODO Check errors
+				} else if err != nil {
+					log.Println("TODO error 4", err)
+				}
+			}
+		} else if err != nil {
+			log.Println("TODO error 3", err)
+		}
 	}
 	return 1, nil
 }

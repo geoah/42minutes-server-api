@@ -49,10 +49,13 @@ func (s *Show) mapInfo(show gotrakt.Show) {
 	s.Images = show.Images
 	s.Genres = show.Genres
 
-	// s.Seasons = make([]Season)
-	// for season := range show.Seasons {
-
-	// }
+	s.Seasons = make([]Season, 0)
+	for _, aseason := range show.Seasons {
+		season := Season{}
+		season.ShowID = s.ID
+		season.MapInfo(aseason)
+		s.Seasons = append(s.Seasons, season)
+	}
 }
 
 // Get basic information from tvdbcom by TvdbID

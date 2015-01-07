@@ -84,11 +84,13 @@ func initDb() *gorp.DbMap {
 	// construct a gorp DbMap
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
 
-	// add a table, setting the table name to 'posts' and
-	// specifying that the Id property is an auto incrementing PK
-	dbmap.AddTableWithName(Show{}, "shows").SetKeys(false, "id")
-	dbmap.AddTableWithName(Episode{}, "episodes").SetKeys(false, "id")
-	dbmap.AddTableWithName(Season{}, "seasons").SetKeys(false, "id")
+	// add tables
+	dbmap.AddTableWithName(Show{}, "shows")
+	dbmap.AddTableWithName(Episode{}, "episodes")
+	dbmap.AddTableWithName(Season{}, "seasons")
+	dbmap.AddTableWithName(UserShow{}, "users_shows")
+	dbmap.AddTableWithName(UserSeason{}, "users_seasons")
+	dbmap.AddTableWithName(UserEpisode{}, "users_episodes")
 
 	// create the table. in a production system you'd generally
 	// use a migration tool, or create the tables via scripts

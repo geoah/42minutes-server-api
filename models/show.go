@@ -1,13 +1,14 @@
 package models
 
 import (
-	// "fmt"
-	"github.com/garfunkel/go-tvdb"
+	"fmt"
+	"github.com/hobeone/gotrakt"
+	"log"
 	// "time"
 )
 
 type Show struct {
-	ID            uint64            `json:"id" db:"id"`
+	ID            int               `json:"id" db:"id"`
 	Title         string            `json:"title" db:"title"`
 	Year          int               `json:"year" db:"year"`
 	URL           string            `json:"url" db:"url"`
@@ -20,62 +21,47 @@ type Show struct {
 	AirTime       string            `json:"air_time" db:"air_time"`
 	Certification string            `json:"certification" db:"certification"`
 	ImdbID        string            `json:"imdb_id" db:"imdb_id"`
-	TvdbID        uint64            `json:"tvdb_id" db:"tvdb_id"`
+	TvdbID        int               `json:"tvdb_id" db:"tvdb_id"`
 	TvrageID      int               `json:"tvrage_id" db:"tvrage_id"`
 	Ended         bool              `json:"ended" db:"ended"`
-	Images        map[string]string `json:"images" db:"images"`
-	Genres        []string          `json:"genres" db:"genres"`
+	Images        map[string]string `json:"images" db:"-"`
+	Genres        []string          `json:"genres" db:"-"`
 	Seasons       []Season          `json:"seasons" db:"-"`
-	Matched       bool              `db:"-"`
 }
 
-func (s *Show) mapInfo(series tvdb.Series) {
-	s.Matched = true
-	s.ID = series.ID
-	s.TvdbID = series.ID
-	s.ImdbID = series.ImdbID
-	s.Title = series.SeriesName
+func (s *Show) mapInfo(show gotrakt.Show) {
+	s.ID = show.TvdbID
+	s.Title = show.Title
+	s.Year = show.Year
+	s.URL = show.URL
+	s.FirstAired = show.FirstAired
+	s.Country = show.Country
+	s.Overview = show.Overview
+	s.Runtime = show.Runtime
+	s.Network = show.Network
+	s.AirDay = show.AirDay
+	s.AirTime = show.AirTime
+	s.Certification = show.Certification
+	s.ImdbID = show.ImdbID
+	s.TvdbID = show.TvdbID
+	s.TvrageID = show.TvrageID
+	s.Ended = show.Ended
+	s.Images = show.Images
+	s.Genres = show.Genres
+
+	// s.Seasons = make([]Season)
+	// for season := range show.Seasons {
+
+	// }
 }
 
-// Get basic information from tvdbcom by ImdbID
-func (s *Show) FetchInfoByImdbID(imdbID string) {
-	// TODO Get just directory instead of full path if LocalPath is absolute
-	// ShowListTvDb, err := tvdb.GetShow(s.LocalName)
-	series, err := tvdb.GetSeriesByIMDBID(imdbID)
-	if err != nil {
-		s.Matched = false
-	} else {
-		s.mapInfo(*series)
-	}
-}
-
-// Get basic information from tvdbcom by ID
-func (s *Show) FetchInfoByID(id uint64) {
-	// TODO Get just directory instead of full path if LocalPath is absolute
-	// ShowListTvDb, err := tvdb.GetShow(s.LocalName)
-	series, err := tvdb.GetSeriesByID(id)
-	if err != nil {
-		s.Matched = false
-	} else {
-		s.mapInfo(*series)
-	}
-}
-
-// Get basic information from tvdbcom
-func (s *Show) FetchInfoByName(name string) {
-	// TODO Get just directory instead of full path if LocalPath is absolute
-	SeriesListTvDb, err := tvdb.GetSeries(name)
-	if err != nil || len(SeriesListTvDb.Series) == 0 {
-		s.Matched = false
-		// fmt.Println("Could not match")
-	} else {
-		// Show := *SeriesListTvDb.Series[0]
-		series, err := tvdb.GetSeriesByID(SeriesListTvDb.Series[0].ID)
-		if err != nil {
-			s.Matched = false
-		} else {
-			s.mapInfo(*series)
-		}
+// Get basic information from tvdbcom by TvdbID
+func (s *Show) UpdateInfoByTvdbID(tvdbID int) {
+	var trakt gotrakt.TraktTV = *GetTraktSession()
+	log.Printf("Trying to retrieve information for show:tvdbid:%d", tvdbID)
+	show, err := trakt.GetShow(fmt.Sprintf("%d", tvdbID))
+	if err == nil {
+		s.mapInfo(*show)
 	}
 }
 

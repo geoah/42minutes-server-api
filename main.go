@@ -30,8 +30,8 @@ func init() {
 	// defer dbmap.Db.Close()
 
 	// Initialize store
-	store = &SeriesStore{
-		M:  make(map[uint64]*Series),
+	store = &ShowStore{
+		M:  make(map[uint64]*Show),
 		Db: dbmap,
 	}
 
@@ -44,8 +44,8 @@ func init() {
 
 	// Setup routes
 	r := martini.NewRouter()
-	r.Get(`/series`, ApiSeriesAll)
-	r.Get(`/series/:id`, ApiSeries)
+	r.Get(`/shows`, ApiShowsAll)
+	r.Get(`/shows/:id`, ApiShows)
 
 	// Allow CORS
 	m.Use(cors.Allow(&cors.Options{
@@ -86,7 +86,9 @@ func initDb() *gorp.DbMap {
 
 	// add a table, setting the table name to 'posts' and
 	// specifying that the Id property is an auto incrementing PK
-	dbmap.AddTableWithName(Series{}, "series").SetKeys(false, "id")
+	dbmap.AddTableWithName(Show{}, "shows").SetKeys(false, "id")
+	dbmap.AddTableWithName(Episode{}, "episodes").SetKeys(false, "id")
+	dbmap.AddTableWithName(Season{}, "seasons").SetKeys(false, "id")
 
 	// create the table. in a production system you'd generally
 	// use a migration tool, or create the tables via scripts

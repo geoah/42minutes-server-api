@@ -12,7 +12,7 @@ type Model interface {
 
 // The Store interface defines methods to manipulate items.
 type Store interface {
-	Get(id int) (*Show, error)
+	GetFromDb(id int) (*Show, error)
 	GetOrRetrieve(id int) (*Show, error)
 	GetOrRetrieveByTraktShow(p *gotrakt.Show) (*Show, error)
 	GetAll() ([]Show, error)
@@ -33,14 +33,14 @@ func (store *ShowStore) GetAll() ([]Show, error) {
 		return nil, err
 	}
 	for _, show := range showsTemp {
-		ashow, _ := store.Get(show.ID)
+		ashow, _ := store.GetFromDb(show.ID)
 		shows = append(shows, *ashow)
 	}
 	return shows, nil
 }
 
 // Get returns a single Show identified by its id, or nil
-func (store *ShowStore) Get(id int) (*Show, error) {
+func (store *ShowStore) GetFromDb(id int) (*Show, error) {
 	show := Show{}
 	err := store.Db.SelectOne(&show, "select * from shows where id=?", id)
 	if err != nil {
@@ -64,7 +64,7 @@ func (store *ShowStore) Get(id int) (*Show, error) {
 
 // Get returns a single Show identified by its id, if the episode doesn't exist it retrieves it and stores it
 func (store *ShowStore) GetOrRetrieve(tvdbID int) (*Show, error) {
-	show, err := store.Get(tvdbID)
+	show, err := store.GetFromDb(tvdbID)
 	if err == sql.ErrNoRows {
 		show.UpdateInfoByTvdbID(tvdbID)
 		store.Upsert(show)
@@ -77,7 +77,7 @@ func (store *ShowStore) GetOrRetrieve(tvdbID int) (*Show, error) {
 
 func (store *ShowStore) GetOrRetrieveByTraktShow(traktShow *gotrakt.Show) (*Show, error) {
 	log.Printf("Trying to retrieve show:%d", traktShow.TvdbID)
-	show, err := store.Get(traktShow.TvdbID)
+	show, err := store.GetFromDb(traktShow.TvdbID)
 	if err == sql.ErrNoRows {
 		log.Printf(" > Show does not exist locally")
 		show.MapInfo(*traktShow)

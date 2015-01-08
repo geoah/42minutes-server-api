@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"github.com/coopernurse/gorp"
+	"github.com/hobeone/gotrakt"
 	"log"
 )
 
@@ -13,6 +14,7 @@ type Model interface {
 type Store interface {
 	Get(id int) (*Show, error)
 	GetOrRetrieve(id int) (*Show, error)
+	GetOrRetrieveByTraktShow(p *gotrakt.Show) (*Show, error)
 	GetAll() ([]Show, error)
 	Upsert(p *Show) (int, error)
 	Delete(p *Show) (int, error)
@@ -42,7 +44,7 @@ func (store *ShowStore) Get(id int) (*Show, error) {
 	show := Show{}
 	err := store.Db.SelectOne(&show, "select * from shows where id=?", id)
 	if err != nil {
-		return nil, err
+		return &show, err
 	}
 	show.Seasons = make([]Season, 0)
 	_, err = store.Db.Select(&show.Seasons, "select * from seasons where show_id=?", show.ID)
@@ -66,14 +68,28 @@ func (store *ShowStore) GetOrRetrieve(id int) (*Show, error) {
 	err := store.Db.SelectOne(&show, "select * from shows where id=?", id)
 	if err == sql.ErrNoRows {
 		show.UpdateInfoByTvdbID(id)
-		store.Upsert(&show)
+	} else if err != nil {
+		log.Println("TODO error", err)
+		return &show, err
+	}
+	store.Upsert(&show)
+	return &show, nil
+}
+
+func (store *ShowStore) GetOrRetrieveByTraktShow(traktShow *gotrakt.Show) (*Show, error) {
+	log.Printf("Trying to retrieve show:%d", traktShow.TvdbID)
+	show, err := store.Get(traktShow.TvdbID)
+	if err == sql.ErrNoRows {
+		log.Printf(" > Show does not exist locally")
+		show.MapInfo(*traktShow)
+		store.Upsert(show)
 	} else if err != nil {
 		log.Println("TODO error", err)
 		// show.UpdateInfoByTvdbID(id)
 		// store.Insert(&show)
 		return nil, err
 	}
-	return &show, nil
+	return show, nil
 }
 
 // Upsert inserts or updates a Show and returns count of inserted/updated records
@@ -88,14 +104,16 @@ func (store *ShowStore) Upsert(show *Show) (int, error) {
 		log.Println("TODO error 3", err)
 	}
 	for _, season := range show.Seasons {
-		err := store.Db.SelectOne(&show, "select * from seasons where show_id=? and season=?", show.ID, season.Season)
-		if err == sql.ErrNoRows {
+		log.Printf("select count(*) from seasons where show_id=? and season=?", show.ID, season.Season)
+		count, err := store.Db.SelectInt("select count(*) from seasons where show_id=? and season=?", show.ID, season.Season)
+		if count == 0 {
 			log.Printf("Trying to insert season:%d:%d", show.ID, season.Season)
 			store.Db.Insert(&season)
 			// TODO Check errors
 			for _, episode := range season.Episodes {
-				err := store.Db.SelectOne(&show, "select * from episodes where show_id=? and season=? and episode=?", show.ID, season.Season, episode.Episode)
-				if err == sql.ErrNoRows {
+				log.Printf("select count(*) from episodes where show_id=? and season=? and episode=?", show.ID, season.Season, episode.Episode)
+				count, err := store.Db.SelectInt("select count(*) from episodes where show_id=? and season=? and episode=?", show.ID, season.Season, episode.Episode)
+				if count == 0 {
 					log.Printf("Trying to insert episode:%d:%d:%d", show.ID, season.Season, episode.Episode)
 					store.Db.Insert(&episode)
 					// TODO Check errors
@@ -127,11 +145,11 @@ func ShowFindAllByName(name string, maxResults int) ([]*Show, error) {
 	if err != nil {
 		return shows, err
 	}
-	for _, show := range showResults {
+	for _, traktShow := range showResults {
 		// TODO: Add additional checks
-		if show.Title != "" && show.TvdbID > 0 {
-			newShow, err := store.GetOrRetrieve(show.TvdbID)
-			if err == nil && show.ImdbID != "" {
+		if traktShow.Title != "" && traktShow.TvdbID > 0 {
+			newShow, err := store.GetOrRetrieveByTraktShow(&traktShow)
+			if err == nil && traktShow.ImdbID != "" {
 				shows = append(shows, newShow)
 			}
 		}

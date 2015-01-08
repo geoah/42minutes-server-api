@@ -8,7 +8,6 @@ type Episode struct {
 	ShowID        int               `json:"show_id" db:"show_id"`
 	Season        int               `json:"season" db:"season"`
 	Episode       int               `json:"episode" db:"episode"`
-	Number        int               `json:"number" db:"number"`
 	TvdbID        int               `json:"tvdb_id" db:"tvdb_id"`
 	Title         string            `json:"title" db:"title"`
 	Overview      string            `json:"overview" db:"overview"`
@@ -20,17 +19,16 @@ type Episode struct {
 	Images        map[string]string `json:"images" db:"-"`
 }
 
-func (e *Episode) MapInfo(episode gotrakt.Episode) {
-	e.Season = episode.Season
-	e.Episode = episode.Episode
-	e.Number = episode.Number
-	e.TvdbID = episode.TvdbID
-	e.Title = episode.Title
-	e.Overview = episode.Overview
-	e.FirstAired = episode.FirstAired
-	e.FirstAiredIso = episode.FirstAiredIso
-	e.FirstAiredUtc = episode.FirstAiredUtc
-	e.URL = episode.URL
-	e.Screen = episode.Screen
-	e.Images = episode.Images
+func (e *Episode) MapInfo(traktEpisode gotrakt.Episode) {
+	e.Season = traktEpisode.Season
+	e.Episode = traktEpisode.Number
+	e.TvdbID = traktEpisode.TvdbID
+	e.Title = traktEpisode.Title
+	e.Overview = traktEpisode.Overview
+	e.FirstAired = traktEpisode.FirstAired
+	e.FirstAiredIso = traktEpisode.FirstAiredIso
+	e.FirstAiredUtc = traktEpisode.FirstAiredUtc
+	e.URL = traktEpisode.URL
+	e.Screen = traktEpisode.Screen
+	e.Images = traktEpisode.Images
 }

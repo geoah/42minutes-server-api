@@ -29,28 +29,28 @@ type Show struct {
 	Seasons       []Season          `json:"seasons" db:"-"`
 }
 
-func (s *Show) mapInfo(show gotrakt.Show) {
-	s.ID = show.TvdbID
-	s.Title = show.Title
-	s.Year = show.Year
-	s.URL = show.URL
-	s.FirstAired = show.FirstAired
-	s.Country = show.Country
-	s.Overview = show.Overview
-	s.Runtime = show.Runtime
-	s.Network = show.Network
-	s.AirDay = show.AirDay
-	s.AirTime = show.AirTime
-	s.Certification = show.Certification
-	s.ImdbID = show.ImdbID
-	s.TvdbID = show.TvdbID
-	s.TvrageID = show.TvrageID
-	s.Ended = show.Ended
-	s.Images = show.Images
-	s.Genres = show.Genres
+func (s *Show) MapInfo(traktShow gotrakt.Show) {
+	s.ID = traktShow.TvdbID
+	s.Title = traktShow.Title
+	s.Year = traktShow.Year
+	s.URL = traktShow.URL
+	s.FirstAired = traktShow.FirstAired
+	s.Country = traktShow.Country
+	s.Overview = traktShow.Overview
+	s.Runtime = traktShow.Runtime
+	s.Network = traktShow.Network
+	s.AirDay = traktShow.AirDay
+	s.AirTime = traktShow.AirTime
+	s.Certification = traktShow.Certification
+	s.ImdbID = traktShow.ImdbID
+	s.TvdbID = traktShow.TvdbID
+	s.TvrageID = traktShow.TvrageID
+	s.Ended = traktShow.Ended
+	s.Images = traktShow.Images
+	s.Genres = traktShow.Genres
 
 	s.Seasons = make([]Season, 0)
-	for _, aseason := range show.Seasons {
+	for _, aseason := range traktShow.Seasons {
 		season := Season{}
 		season.ShowID = s.ID
 		season.MapInfo(aseason)
@@ -64,7 +64,7 @@ func (s *Show) UpdateInfoByTvdbID(tvdbID int) {
 	log.Printf("Trying to retrieve information for show:tvdbid:%d", tvdbID)
 	show, err := trakt.GetShow(fmt.Sprintf("%d", tvdbID))
 	if err == nil {
-		s.mapInfo(*show)
+		s.MapInfo(*show)
 	}
 }
 

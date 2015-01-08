@@ -1,1 +1,1 @@
-web: api
+web: 42minutes-server-api

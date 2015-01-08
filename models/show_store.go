@@ -63,17 +63,16 @@ func (store *ShowStore) Get(id int) (*Show, error) {
 }
 
 // Get returns a single Show identified by its id, if the episode doesn't exist it retrieves it and stores it
-func (store *ShowStore) GetOrRetrieve(id int) (*Show, error) {
-	show := Show{}
-	err := store.Db.SelectOne(&show, "select * from shows where id=?", id)
+func (store *ShowStore) GetOrRetrieve(tvdbID int) (*Show, error) {
+	show, err := store.Get(tvdbID)
 	if err == sql.ErrNoRows {
-		show.UpdateInfoByTvdbID(id)
+		show.UpdateInfoByTvdbID(tvdbID)
+		store.Upsert(show)
 	} else if err != nil {
 		log.Println("TODO error", err)
-		return &show, err
+		return show, err
 	}
-	store.Upsert(&show)
-	return &show, nil
+	return show, nil
 }
 
 func (store *ShowStore) GetOrRetrieveByTraktShow(traktShow *gotrakt.Show) (*Show, error) {
@@ -85,9 +84,7 @@ func (store *ShowStore) GetOrRetrieveByTraktShow(traktShow *gotrakt.Show) (*Show
 		store.Upsert(show)
 	} else if err != nil {
 		log.Println("TODO error", err)
-		// show.UpdateInfoByTvdbID(id)
-		// store.Insert(&show)
-		return nil, err
+		return show, err
 	}
 	return show, nil
 }
@@ -148,7 +145,10 @@ func ShowFindAllByName(name string, maxResults int) ([]*Show, error) {
 	for _, traktShow := range showResults {
 		// TODO: Add additional checks
 		if traktShow.Title != "" && traktShow.TvdbID > 0 {
-			newShow, err := store.GetOrRetrieveByTraktShow(&traktShow)
+			// TODO Currently the api doesn't support properly getting extended info on search
+			// so season and episodes were missing a lot of data.
+			// newShow, err := store.GetOrRetrieveByTraktShow(&traktShow)
+			newShow, err := store.GetOrRetrieve(traktShow.TvdbID)
 			if err == nil && traktShow.ImdbID != "" {
 				shows = append(shows, newShow)
 			}

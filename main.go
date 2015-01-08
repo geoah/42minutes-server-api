@@ -7,6 +7,7 @@ import (
 	"github.com/martini-contrib/cors"
 	"log"
 	"net/http"
+	"os"
 )
 
 // Martini instance
@@ -53,7 +54,13 @@ func init() {
 
 func main() {
 	// Startup HTTP server
-	if err := http.ListenAndServe(":8000", m); err != nil {
+
+	port := "8000"
+	if os.Getenv("PORT") != "" {
+		port = os.Getenv("PORT")
+	}
+
+	if err := http.ListenAndServe("0.0.0.0:"+port, m); err != nil {
 		log.Fatal(err)
 	}
 }

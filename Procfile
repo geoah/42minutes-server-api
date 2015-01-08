@@ -1,1 +1,1 @@
-worker: api
+web: api

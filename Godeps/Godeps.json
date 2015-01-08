@@ -23,8 +23,8 @@
 		},
 		{
 			"ImportPath": "github.com/go-martini/martini",
-			"Comment": "v1.0-62-g0667da2",
-			"Rev": "0667da2d9fb42143323bb9d1ae05030fd628a073"
+			"Comment": "v1.0-85-gbbd489b",
+			"Rev": "bbd489b35fd7eac9aaf442e5671ab21cdd972926"
 		},
 		{
 			"ImportPath": "github.com/golang/glog",
@@ -49,28 +49,28 @@
 		},
 		{
 			"ImportPath": "github.com/ziutek/mymysql/autorc",
-			"Comment": "v1.5.3-21-g261574e",
-			"Rev": "261574e2f4a9d9d2d81a8f996105c8c835bfe19b"
+			"Comment": "v1.5.3-22-g0d055cd",
+			"Rev": "0d055cd4a2e8277d32538fa635b4e1c5573c12d0"
 		},
 		{
 			"ImportPath": "github.com/ziutek/mymysql/godrv",
-			"Comment": "v1.5.3-21-g261574e",
-			"Rev": "261574e2f4a9d9d2d81a8f996105c8c835bfe19b"
+			"Comment": "v1.5.3-22-g0d055cd",
+			"Rev": "0d055cd4a2e8277d32538fa635b4e1c5573c12d0"
 		},
 		{
 			"ImportPath": "github.com/ziutek/mymysql/mysql",
-			"Comment": "v1.5.3-21-g261574e",
-			"Rev": "261574e2f4a9d9d2d81a8f996105c8c835bfe19b"
+			"Comment": "v1.5.3-22-g0d055cd",
+			"Rev": "0d055cd4a2e8277d32538fa635b4e1c5573c12d0"
 		},
 		{
 			"ImportPath": "github.com/ziutek/mymysql/native",
-			"Comment": "v1.5.3-21-g261574e",
-			"Rev": "261574e2f4a9d9d2d81a8f996105c8c835bfe19b"
+			"Comment": "v1.5.3-22-g0d055cd",
+			"Rev": "0d055cd4a2e8277d32538fa635b4e1c5573c12d0"
 		},
 		{
 			"ImportPath": "github.com/ziutek/mymysql/thrsafe",
-			"Comment": "v1.5.3-21-g261574e",
-			"Rev": "261574e2f4a9d9d2d81a8f996105c8c835bfe19b"
+			"Comment": "v1.5.3-22-g0d055cd",
+			"Rev": "0d055cd4a2e8277d32538fa635b4e1c5573c12d0"
 		}
 	]
 }

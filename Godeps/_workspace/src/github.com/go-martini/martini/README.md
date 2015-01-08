@@ -10,6 +10,7 @@ Language Translations:
 * [Русский](translations/README_ru_RU.md)
 * [日本語](translations/README_ja_JP.md)
 * [French](translations/README_fr_FR.md)
+* [Turkish](translations/README_tr_TR.md)
 
 ## Getting Started
 
@@ -29,7 +30,7 @@ func main() {
 }
 ~~~
 
-Then install the Martini package (**go 1.1** and greater is required):
+Then install the Martini package (**go 1.1** or greater is required):
 ~~~
 go get github.com/go-martini/martini
 ~~~
@@ -266,7 +267,7 @@ The following example serves the `/index.html` file whenever any URL is
 requested that does not match any local file and does not start with `/api/v`:
 ~~~ go
 static := martini.Static("assets", martini.StaticOptions{Fallback: "/index.html", Exclude: "/api/v"})
-r.NotFound(static, http.NotFound)
+m.NotFound(static, http.NotFound)
 ~~~
 
 ## Middleware Handlers
@@ -358,12 +359,12 @@ func init() {
 ### How do I change the port/host?
 
 Martini's `Run` function looks for the PORT and HOST environment variables and uses those. Otherwise Martini will default to localhost:3000.
-To have more flexibility over port and host, use the `http.ListenAndServe` function instead.
+To have more flexibility over port and host, use the `martini.RunOnAddr` function instead.
 
 ~~~ go
   m := martini.Classic()
   // ...
-  log.Fatal(http.ListenAndServe(":8080", m))
+  log.Fatal(m.RunOnAddr(":8080"))
 ~~~
 
 ### Live code reload?

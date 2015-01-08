@@ -98,8 +98,8 @@ m.Get("/", func() (int, string) {
 })
 ~~~
 
-#### 服务的注入 
-处理器是通过反射来调用的. Martini 通过*Dependency Injection* *（依赖注入）* 来为处理器注入参数列表. **这样使得Martini与Go语言的`http.HandlerFunc`接口完全兼容.** 
+#### 服务的注入
+处理器是通过反射来调用的. Martini 通过*Dependency Injection* *（依赖注入）* 来为处理器注入参数列表. **这样使得Martini与Go语言的`http.HandlerFunc`接口完全兼容.**
 
 如果你加入一个参数到你的处理器, Martini将会搜索它参数列表中的服务，并且通过类型判断来解决依赖关系:
 ~~~ go
@@ -246,7 +246,7 @@ m.Use(func(c martini.Context, log *log.Logger){
   log.Println("before a request")
 
   c.Next()
-  
+
   log.Println("after a request")
 })
 ~~~
@@ -257,19 +257,20 @@ m.Use(func(c martini.Context, log *log.Logger){
 
 可以查看 [martini-contrib](https://github.com/martini-contrib) 项目. 如果看了觉得没有什么好货色, 可以联系martini-contrib的团队成员为你创建一个新的代码资源库.
 
-* [auth](https://github.com/martini-contrib/auth) - 认证处理器.
-* [binding](https://github.com/martini-contrib/binding) - 映射/验证raw请求到结构体(structure)里的处理器
-* [gzip](https://github.com/martini-contrib/gzip) - 加入gzip支持的处理器
-* [render](https://github.com/martini-contrib/render) - 渲染JSON和HTML模板的处理器.
-* [acceptlang](https://github.com/martini-contrib/acceptlang) - 解析`Accept-Language` HTTP报头的处理器.
-* [sessions](https://github.com/martini-contrib/sessions) - 提供会话服务支持的处理器.
-* [strip](https://github.com/martini-contrib/strip) - URL Prefix stripping.
-* [method](https://github.com/martini-contrib/method) - HTTP method overriding via Header or form fields.
-* [secure](https://github.com/martini-contrib/secure) - Implements a few quick security wins.
-* [encoder](https://github.com/martini-contrib/encoder) - Encoder service for rendering data in several formats and content negotiation.
-* [cors](https://github.com/martini-contrib/cors) - Handler that enables CORS support.
-* [oauth2](https://github.com/martini-contrib/oauth2) - Handler that provides OAuth 2.0 login for Martini apps. Google Sign-in, Facebook Connect and Github login is supported.
-* [vauth](https://github.com/rafecolton/vauth) - Handlers for vender webhook authentication (currently GitHub and TravisCI)
+* [auth](https://github.com/martini-contrib/auth) - 认证处理器。
+* [binding](https://github.com/martini-contrib/binding) - 映射/验证raw请求到结构体(structure)里的处理器。
+* [gzip](https://github.com/martini-contrib/gzip) - 通过giz方式压缩请求信息的处理器。
+* [render](https://github.com/martini-contrib/render) - 渲染JSON和HTML模板的处理器。
+* [acceptlang](https://github.com/martini-contrib/acceptlang) - 解析`Accept-Language` HTTP报头的处理器。
+* [sessions](https://github.com/martini-contrib/sessions) - 提供`Session`服务支持的处理器。
+* [strip](https://github.com/martini-contrib/strip) - 用于过滤指定的URL前缀。
+* [method](https://github.com/martini-contrib/method) - 通过请求头或表单域覆盖HTTP方法。
+* [secure](https://github.com/martini-contrib/secure) - 提供一些安全方面的速效方案。
+* [encoder](https://github.com/martini-contrib/encoder) - 提供用于多种格式的数据渲染或内容协商的编码服务。
+* [cors](https://github.com/martini-contrib/cors) - 提供支持 CORS 的处理器。
+* [oauth2](https://github.com/martini-contrib/oauth2) - 基于 OAuth 2.0 的应用登录处理器。支持谷歌、Facebook和Github的登录。
+* [vauth](https://github.com/rafecolton/vauth) - 负责webhook认证的处理器(目前支持GitHub和TravisCI)。
+
 
 ### 我如何整合到我现有的服务器中?
 
@@ -295,12 +296,12 @@ func init() {
 ### 我如何修改port/host?
 
 Martini的`Run`函数会检查PORT和HOST的环境变量并使用它们. 否则Martini将会默认使用localhost:3000
-如果想要自定义PORT和HOST, 使用`http.ListenAndServe`函数来代替.
+如果想要自定义PORT和HOST, 使用`martini.RunOnAddr`函数来代替.
 
 ~~~ go
   m := martini.Classic()
   // ...
-  http.ListenAndServe(":8080", m)
+  m.RunOnAddr(":8080")
 ~~~
 
 ## 贡献

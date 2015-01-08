@@ -1,1 +1,1 @@
-web: api
+wordker: api

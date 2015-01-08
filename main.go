@@ -26,8 +26,8 @@ func init() {
 
 	// Setup routes
 	r := martini.NewRouter()
-	r.Get(`/shows`, ApiShowsAll)
-	// r.Get(`/shows/:id`, ApiShows)
+	r.Get(`/shows`, ApiShowsGetAll)
+	r.Get(`/shows/:id`, ApiShowsGetOne)
 	r.Post(`/files`, ApiFilesPost)
 
 	// Allow CORS

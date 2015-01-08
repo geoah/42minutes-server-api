@@ -5,13 +5,13 @@ import (
 	. "github.com/42minutes/api/models"
 	"github.com/codegangsta/martini-contrib/encoder"
 	_ "github.com/garfunkel/go-tvdb"
-	// "github.com/go-martini/martini"
+	"github.com/go-martini/martini"
 	"log"
 	"net/http"
-	// "strconv"
+	"strconv"
 )
 
-func ApiShowsAll(r *http.Request, enc encoder.Encoder, store Store) (int, []byte) {
+func ApiShowsGetAll(r *http.Request, enc encoder.Encoder, store Store) (int, []byte) {
 	if r.URL.Query().Get("name") == "" {
 		show, err := store.GetAll()
 		if err != nil {
@@ -36,22 +36,15 @@ func ApiShowsAll(r *http.Request, enc encoder.Encoder, store Store) (int, []byte
 	}
 }
 
-// func ApiShows(enc encoder.Encoder, store Store, parms martini.Params) (int, []byte) {
-// 	// TODO Check for parms:id
-// 	// Get payload Object from Store
-// 	id, err := strconv.ParseUint(parms["id"], 10, 64)
-// 	if err != nil {
-// 		return http.StatusBadRequest, encoder.Must(enc.Encode(err))
-// 	} else {
-// 		Show := store.Get(id)
-// 		// Show.fetchDetails()
-// 		// if Show.Matched == true {
-// 		// 	Show.CheckForExistingEpisodes()
-// 		// 	Show.FetchTorrentLinks()
-// 		// 	// Show.PrintResults()
-// 		// 	// Show.PrintJsonResults()
-// 		// }
-// 		// // TODO Check if payload exists
-// 		return http.StatusOK, encoder.Must(enc.Encode(Show))
-// 	}
-// }
+func ApiShowsGetOne(r *http.Request, enc encoder.Encoder, store Store, parms martini.Params) (int, []byte) {
+	id, err := strconv.Atoi(parms["id"])
+	if err != nil {
+		return http.StatusBadRequest, encoder.Must(enc.Encode(err))
+	} else {
+		show, err := store.GetOrRetrieve(id)
+		if err != nil {
+			return http.StatusBadRequest, encoder.Must(enc.Encode(err))
+		}
+		return http.StatusOK, encoder.Must(enc.Encode(show))
+	}
+}

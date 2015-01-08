@@ -9,7 +9,7 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/twinj/uuid"
 	"io/ioutil"
-	"log"
+	// "log"
 	"net/http"
 )
 

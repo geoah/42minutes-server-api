@@ -27,13 +27,13 @@ func ApiFilesPost(r *http.Request, enc encoder.Encoder, store Store, parms marti
 	}
 
 	for userFile_i, userFile := range userFiles {
-		err = db.SelectOne(&userFiles[userFile_i], "select * from users_files where user_id=? and full_path_hash=?", userFile.UserID, userFile.FullPathHash)
+		err = db.SelectOne(&userFiles[userFile_i], "select * from users_files where user_id=? and relative_path=?", userFile.UserID, userFile.RelativePath)
 		if err == sql.ErrNoRows {
 			userFiles[userFile_i].ID = uuid.Formatter(uuid.NewV4(), uuid.CleanHyphen)
-			db.Insert(&userFile)
+			db.Insert(&userFiles[userFile_i])
+			// TODO Error
 		} else if err != nil {
-			return http.StatusNotFound, encoder.Must(enc.Encode(
-				NewError(ErrCodeNotExist, "Could not insert file record")))
+			// TODO Error
 		}
 	}
 	return http.StatusOK, encoder.Must(enc.Encode(userFiles))

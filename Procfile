@@ -1,1 +1,1 @@
-wordker: api
+worker: api

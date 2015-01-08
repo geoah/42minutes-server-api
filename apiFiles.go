@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	. "github.com/42minutes/api/models"
+	. "github.com/42minutes/42minutes-server-api/models"
 	"github.com/codegangsta/martini-contrib/encoder"
 	_ "github.com/garfunkel/go-tvdb"
 	"github.com/go-martini/martini"

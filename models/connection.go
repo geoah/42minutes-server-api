@@ -10,6 +10,7 @@ import (
 	_ "github.com/ziutek/mymysql/mysql"
 	_ "github.com/ziutek/mymysql/thrsafe"
 	"log"
+	"os"
 )
 
 var dbmap *gorp.DbMap
@@ -20,10 +21,36 @@ func GetDbSession() *gorp.DbMap {
 	if dbmap != nil {
 		return dbmap
 	}
-	log.Println(">>>>>>>>>1")
+
+	db_uri := "tcp:"
+
+	if os.Getenv("DB_HOST") != "" {
+		db_uri += os.Getenv("DB_HOST")
+	} else {
+		db_uri += "localhost"
+	}
+
+	if os.Getenv("DB_PORT") != "" {
+		db_uri += ":" + os.Getenv("DB_PORT")
+	} else {
+		db_uri += ":3306"
+	}
+
+	if os.Getenv("DB_NAME") != "" {
+		db_uri += "*" + os.Getenv("DB_NAME")
+	} else {
+		db_uri += "*42minutes"
+	}
+
+	if os.Getenv("DB_USER") != "" && os.Getenv("DB_PASS") != "" {
+		db_uri += "/" + os.Getenv("DB_USER") + "/" + os.Getenv("DB_PASS")
+	}
+
+	log.Println("Connecting to", db_uri)
+
 	// connect to db using standard Go database/sql API
 	// use whatever database/sql driver you wish
-	db, err := sql.Open("mymysql", "tcp:localhost:3306*42minutes/root/root")
+	db, err := sql.Open("mymysql", db_uri)
 	checkErr(err, "sql.Open failed")
 
 	// construct a gorp DbMap

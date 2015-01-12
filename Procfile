@@ -1,1 +1,0 @@
-web: 42minutes-server-api

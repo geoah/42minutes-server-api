@@ -22,6 +22,7 @@ func ApiShowsGetAll(r *http.Request, enc encoder.Encoder, store Store) (int, []b
 		return http.StatusOK, encoder.Must(enc.Encode(show))
 	} else {
 		name := r.URL.Query().Get("name")
+		fmt.Println("Trying to look for show.", name)
 		show, err := ShowFindAllByName(name, 5)
 		if err != nil {
 			log.Println(err)

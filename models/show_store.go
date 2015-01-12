@@ -2,8 +2,9 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
+	// "github.com/42minutes/go-trakt"
 	"github.com/coopernurse/gorp"
-	"github.com/hobeone/gotrakt"
 	"log"
 )
 
@@ -14,7 +15,7 @@ type Model interface {
 type Store interface {
 	GetFromDb(id int) (*Show, error)
 	GetOrRetrieve(id int) (*Show, error)
-	GetOrRetrieveByTraktShow(p *gotrakt.Show) (*Show, error)
+	// GetOrRetrieveByTraktShow(p *trakt.Show) (*Show, error)
 	GetAll() ([]Show, error)
 	Upsert(p *Show) (int, error)
 	Delete(p *Show) (int, error)
@@ -63,10 +64,11 @@ func (store *ShowStore) GetFromDb(id int) (*Show, error) {
 }
 
 // Get returns a single Show identified by its id, if the episode doesn't exist it retrieves it and stores it
-func (store *ShowStore) GetOrRetrieve(tvdbID int) (*Show, error) {
-	show, err := store.GetFromDb(tvdbID)
+func (store *ShowStore) GetOrRetrieve(traktID int) (*Show, error) {
+	show, err := store.GetFromDb(traktID)
 	if err == sql.ErrNoRows {
-		show.UpdateInfoByTvdbID(tvdbID)
+		log.Printf(" > Show does not exist locally")
+		show.UpdateInfoByTraktID(traktID)
 		store.Upsert(show)
 	} else if err != nil {
 		log.Println("TODO error", err)
@@ -75,22 +77,23 @@ func (store *ShowStore) GetOrRetrieve(tvdbID int) (*Show, error) {
 	return show, nil
 }
 
-func (store *ShowStore) GetOrRetrieveByTraktShow(traktShow *gotrakt.Show) (*Show, error) {
-	log.Printf("Trying to retrieve show:%d", traktShow.TvdbID)
-	show, err := store.GetFromDb(traktShow.TvdbID)
-	if err == sql.ErrNoRows {
-		log.Printf(" > Show does not exist locally")
-		show.MapInfo(*traktShow)
-		store.Upsert(show)
-	} else if err != nil {
-		log.Println("TODO error", err)
-		return show, err
-	}
-	return show, nil
-}
+// func (store *ShowStore) GetOrRetrieveByTraktShow(traktShow *trakt.Show) (*Show, error) {
+// 	log.Printf("Trying to retrieve show:%d", traktShow.Ids.Trakt)
+// 	show, err := store.GetFromDb(traktShow.Ids.Trakt)
+// 	if err == sql.ErrNoRows {
+// 		log.Printf(" > Show does not exist locally")
+// 		show.MapInfo(*traktShow)
+// 		store.Upsert(show)
+// 	} else if err != nil {
+// 		log.Println("TODO error", err)
+// 		return show, err
+// 	}
+// 	return show, nil
+// }
 
 // Upsert inserts or updates a Show and returns count of inserted/updated records
 func (store *ShowStore) Upsert(show *Show) (int, error) {
+	fmt.Println("UPSERT", show)
 	log.Printf("Trying to upsert show:%d", show.ID)
 	err := store.Db.SelectOne(&show, "select * from shows where id=?", show.ID)
 	if err == sql.ErrNoRows {
@@ -138,18 +141,18 @@ func ShowFindAllByName(name string, maxResults int) ([]*Show, error) {
 	shows := make([]*Show, 0)
 	trakt := GetTraktSession()
 	// store := *GetStoreSession()
-	showResults, err := trakt.ShowSearch(name)
-	if err != nil {
-		return shows, err
+	showResults, result := trakt.Shows().Search(name)
+	if result.HasError() == true {
+		return shows, result.Err
 	}
 	for _, traktShow := range showResults {
 		// TODO: Add additional checks
-		if traktShow.Title != "" && traktShow.TvdbID > 0 {
+		if traktShow.Show.Title != "" && traktShow.Show.Ids.Imdb != "" {
 			// TODO Currently the api doesn't support properly getting extended info on search
 			// so season and episodes were missing a lot of data.
 			// newShow, err := store.GetOrRetrieveByTraktShow(&traktShow)
-			newShow, err := store.GetOrRetrieve(traktShow.TvdbID)
-			if err == nil && traktShow.ImdbID != "" {
+			newShow, err := store.GetOrRetrieve(traktShow.Show.Ids.Trakt)
+			if err == nil && newShow.TraktID > 0 {
 				shows = append(shows, newShow)
 			}
 		}

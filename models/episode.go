@@ -1,34 +1,44 @@
 package models
 
 import (
-	"github.com/hobeone/gotrakt"
+	"github.com/42minutes/go-trakt"
 )
 
 type Episode struct {
-	ShowID        int               `json:"show_id" db:"show_id"`
-	Season        int               `json:"season" db:"season"`
-	Episode       int               `json:"episode" db:"episode"`
-	TvdbID        int               `json:"tvdb_id" db:"tvdb_id"`
-	Title         string            `json:"title" db:"title"`
-	Overview      string            `json:"overview" db:"overview"`
-	FirstAired    int               `json:"first_aired" db:"first_aired"`
-	FirstAiredIso string            `json:"first_aired_iso" db:"first_aired_iso"`
-	FirstAiredUtc int               `json:"first_aired_utc" db:"first_aired_utc"`
-	URL           string            `json:"url" db:"url"`
-	Screen        string            `json:"screen" db:"screen"`
-	Images        map[string]string `json:"images" db:"-"`
+	// ID                     int     `json:"id" db:"id"`
+	ShowID                 int     `json:"show_id" db:"show_id"`
+	TmdbID                 int     `json:"tmdb_id" db:"tmdb_id"`
+	TraktID                int     `json:"trakt_id" db:"trakt_id"`
+	TvdbID                 int     `json:"tvdb_id" db:"tvdb_id"`
+	TvrageID               int     `json:"tvrage_id" db:"tvrage_id"`
+	FirstAired             string  `json:"first_aired" db:"first_aired"`
+	ImagesScreenshotFull   string  `json:"images_screenshot_full" db:"images_screenshot_full"`
+	ImagesScreenshotMedium string  `json:"images_screenshot_medium" db:"images_screenshot_medium"`
+	ImagesScreenshotThumb  string  `json:"images_screenshot_thumb" db:"images_screenshot_thumb"`
+	Episode                int     `json:"episode" db:"episode"`
+	Overview               string  `json:"overview" db:"overview"`
+	Rating                 float64 `json:"rating" db:"rating"`
+	Season                 int     `json:"season" db:"season"`
+	Title                  string  `json:"title" db:"title"`
+	UpdatedAt              string  `json:"updated_at" db:"updated_at"`
+	Votes                  int     `json:"votes" db:"votes"`
 }
 
-func (e *Episode) MapInfo(traktEpisode gotrakt.Episode) {
-	e.Season = traktEpisode.Season
-	e.Episode = traktEpisode.Number
-	e.TvdbID = traktEpisode.TvdbID
-	e.Title = traktEpisode.Title
-	e.Overview = traktEpisode.Overview
+func (e *Episode) MapInfo(traktEpisode trakt.Episode) {
+	// e.ID = traktEpisode.Ids.Tvdb
+	e.TmdbID = traktEpisode.Ids.Tmdb
+	e.TraktID = traktEpisode.Ids.Trakt
+	e.TvdbID = traktEpisode.Ids.Tvdb
+	e.TvrageID = traktEpisode.Ids.Tvrage
 	e.FirstAired = traktEpisode.FirstAired
-	e.FirstAiredIso = traktEpisode.FirstAiredIso
-	e.FirstAiredUtc = traktEpisode.FirstAiredUtc
-	e.URL = traktEpisode.URL
-	e.Screen = traktEpisode.Screen
-	e.Images = traktEpisode.Images
+	e.ImagesScreenshotFull = traktEpisode.Images.Screenshot.Full
+	e.ImagesScreenshotMedium = traktEpisode.Images.Screenshot.Medium
+	e.ImagesScreenshotThumb = traktEpisode.Images.Screenshot.Thumb
+	e.Episode = traktEpisode.Number
+	e.Overview = traktEpisode.Overview
+	e.Rating = traktEpisode.Rating
+	e.Season = traktEpisode.Season
+	e.Title = traktEpisode.Title
+	e.UpdatedAt = traktEpisode.UpdatedAt
+	e.Votes = traktEpisode.Votes
 }

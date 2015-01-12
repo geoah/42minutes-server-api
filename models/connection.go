@@ -2,19 +2,19 @@ package models
 
 import (
 	"database/sql"
+	"log"
+	"os"
+
+	"github.com/42minutes/go-trakt"
 	"github.com/coopernurse/gorp"
-	"github.com/hobeone/gotrakt"
-	"github.com/jmcvetta/napping"
 	_ "github.com/ziutek/mymysql/autorc"
 	_ "github.com/ziutek/mymysql/godrv"
 	_ "github.com/ziutek/mymysql/mysql"
 	_ "github.com/ziutek/mymysql/thrsafe"
-	"log"
-	"os"
 )
 
 var dbmap *gorp.DbMap
-var trakt *gotrakt.TraktTV
+var traktClient *trakt.Client
 var store Store
 
 func GetDbSession() *gorp.DbMap {
@@ -62,8 +62,8 @@ func GetDbSession() *gorp.DbMap {
 	dbmap.AddTableWithName(Season{}, "seasons").SetKeys(false, "show_id", "season")
 	dbmap.AddTableWithName(Episode{}, "episodes").SetKeys(false, "show_id", "season", "episode")
 	dbmap.AddTableWithName(UserShow{}, "users_shows").SetKeys(false, "user_id", "show_id")
-	dbmap.AddTableWithName(UserSeason{}, "users_seasons").SetKeys(false, "user_id", "show_id", "season_id")
-	dbmap.AddTableWithName(UserEpisode{}, "users_episodes").SetKeys(false, "user_id", "show_id", "season_id", "episode_id")
+	dbmap.AddTableWithName(UserSeason{}, "users_seasons").SetKeys(false, "user_id", "show_id", "season")
+	dbmap.AddTableWithName(UserEpisode{}, "users_episodes").SetKeys(false, "user_id", "show_id", "season", "episode")
 	dbmap.AddTableWithName(User{}, "users").SetKeys(false, "id")
 	dbmap.AddTableWithName(UserFile{}, "users_files").SetKeys(false, "user_id", "relative_path")
 
@@ -75,21 +75,29 @@ func GetDbSession() *gorp.DbMap {
 	return dbmap
 }
 
-func GetTraktSession() *gotrakt.TraktTV {
-	if trakt != nil {
-		return trakt
+func GetTraktSession() *trakt.Client {
+	if traktClient != nil {
+		return traktClient
 	}
 
-	sess := &napping.Session{}
-	sess.Params = &napping.Params{
-		"testing": "true",
+	var trakt_api_key, trakt_access_token string
+	if os.Getenv("TRAKT_API_KEY") != "" {
+		trakt_api_key = os.Getenv("TRAKT_API_KEY")
+	} else {
+		log.Fatal("Missing TRAKT_API_KEY")
 	}
-	var err error
-	trakt, err = gotrakt.New("testingapi", gotrakt.Session(sess))
-	if err != nil {
-		return nil
+	if os.Getenv("TRAKT_ACCESS_TOKEN") != "" {
+		trakt_access_token = os.Getenv("TRAKT_ACCESS_TOKEN")
+	} else {
+		log.Fatal("Missing TRAKT_ACCESS_TOKEN")
 	}
-	return trakt
+
+	traktClient = trakt.NewClient(
+		trakt_api_key,
+		trakt.TokenAuth{AccessToken: trakt_access_token},
+	)
+
+	return traktClient
 }
 
 func GetStoreSession() *Store {

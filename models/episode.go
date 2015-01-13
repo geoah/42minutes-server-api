@@ -22,6 +22,7 @@ type Episode struct {
 	Title                  string  `json:"title" db:"title"`
 	UpdatedAt              string  `json:"updated_at" db:"updated_at"`
 	Votes                  int     `json:"votes" db:"votes"`
+	Infohash               string  `json:"infohash" db:"infohash"`
 }
 
 func (e *Episode) MapInfo(traktEpisode trakt.Episode) {

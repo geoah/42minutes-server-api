@@ -2,10 +2,9 @@ package models
 
 import (
 	"database/sql"
-	"fmt"
-	// "github.com/42minutes/go-trakt"
-	"github.com/coopernurse/gorp"
 	"log"
+
+	"github.com/coopernurse/gorp"
 )
 
 type Model interface {
@@ -21,7 +20,6 @@ type Store interface {
 	GetEpisodesByShowIdAndSeason(id int, seasonNumber int) ([]*Episode, error)
 	GetEpisodesOrRetrieveByShowIdAndSeason(id int, seasonNumber int) ([]*Episode, error)
 	// GetOrRetrieveByTraktShow(p *trakt.Show) (*Show, error)
-	Upsert(p *Show) (int, error)
 	Delete(p *Show) (int, error)
 }
 
@@ -44,14 +42,19 @@ func (store *ShowStore) GetShow(showId int) (*Show, error) {
 func (store *ShowStore) GetShowOrRetrieve(showId int) (*Show, error) {
 	show, err := store.GetShow(showId)
 	if err == sql.ErrNoRows {
+		err = nil
 		log.Printf(" > Show does not exist locally")
-		show.UpdateInfoByTraktID(showId)
-		store.Upsert(show)
-	} else if err != nil {
-		log.Println("TODO error", err)
-		return show, err
+		trakt := GetTraktSession()
+		traktShow, _ := trakt.Shows().One(showId) // TODO Error
+		show.MapInfo(*traktShow)
+		// Cache
+		go func(show *Show) {
+			db := GetDbSession()
+			log.Printf("Trying to insert show:%d", show.ID)
+			db.Insert(show)
+		}(show)
 	}
-	return show, nil
+	return show, err
 }
 
 func (store *ShowStore) GetSeasonsByShowId(showId int) ([]*Season, error) {
@@ -123,43 +126,6 @@ func (store *ShowStore) GetEpisodesOrRetrieveByShowIdAndSeason(showId int, seaso
 		return episodes, err
 	}
 	return episodes, err
-}
-
-// Upsert inserts or updates a Show and returns count of inserted/updated records
-func (store *ShowStore) Upsert(show *Show) (int, error) {
-	fmt.Println("UPSERT", show)
-	log.Printf("Trying to upsert show:%d", show.ID)
-	err := store.Db.SelectOne(&show, "select * from shows where id=?", show.ID)
-	if err == sql.ErrNoRows {
-		log.Printf("Trying to insert show:%d", show.ID)
-		store.Db.Insert(show)
-		// TODO Check errors
-	} else if err != nil {
-		log.Println("TODO error 3", err)
-	}
-	for _, season := range show.Seasons {
-		log.Printf("select count(*) from seasons where show_id=? and season=?", show.ID, season.Season)
-		count, err := store.Db.SelectInt("select count(*) from seasons where show_id=? and season=?", show.ID, season.Season)
-		if count == 0 {
-			log.Printf("Trying to insert season:%d:%d", show.ID, season.Season)
-			store.Db.Insert(&season)
-			// TODO Check errors
-			for _, episode := range season.Episodes {
-				log.Printf("select count(*) from episodes where show_id=? and season=? and episode=?", show.ID, season.Season, episode.Episode)
-				count, err := store.Db.SelectInt("select count(*) from episodes where show_id=? and season=? and episode=?", show.ID, season.Season, episode.Episode)
-				if count == 0 {
-					log.Printf("Trying to insert episode:%d:%d:%d", show.ID, season.Season, episode.Episode)
-					store.Db.Insert(&episode)
-					// TODO Check errors
-				} else if err != nil {
-					log.Println("TODO error 4", err)
-				}
-			}
-		} else if err != nil {
-			log.Println("TODO error 3", err)
-		}
-	}
-	return 1, nil
 }
 
 // Deletes removes Show and returns count of removed records

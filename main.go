@@ -29,6 +29,7 @@ func init() {
 	r := martini.NewRouter()
 	r.Get(`/shows`, ApiShowsGetAll)
 	r.Get(`/shows/:id`, ApiShowsGetOne)
+	r.Get(`/shows/:showId/seasons`, ApiSeasonsGetAllByShow)
 	r.Post(`/files`, ApiFilesPost)
 	r.Get(`/register`, ApiUsersRegister)
 

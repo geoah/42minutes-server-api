@@ -13,7 +13,7 @@ import (
 
 func ApiShowsGetAll(r *http.Request, enc encoder.Encoder, store Store) (int, []byte) {
 	if r.URL.Query().Get("name") == "" {
-		show, err := store.GetAll()
+		show, err := store.GetShows()
 		if err != nil {
 			log.Println(err)
 			return http.StatusNotFound, encoder.Must(enc.Encode(
@@ -42,7 +42,7 @@ func ApiShowsGetOne(r *http.Request, enc encoder.Encoder, store Store, parms mar
 	if err != nil {
 		return http.StatusBadRequest, encoder.Must(enc.Encode(err))
 	} else {
-		show, err := store.GetOrRetrieve(id)
+		show, err := store.GetShowOrRetrieve(id)
 		if err != nil {
 			return http.StatusBadRequest, encoder.Must(enc.Encode(err))
 		}

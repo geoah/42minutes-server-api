@@ -10,13 +10,11 @@ import (
 )
 
 func ApiSeasonsGetAllByShow(r *http.Request, enc encoder.Encoder, store Store, parms martini.Params) (int, []byte) {
-	var seasons []Season
-	db := GetDbSession()
 	id, err := strconv.Atoi(parms["showId"])
 	if err != nil {
 		return http.StatusBadRequest, encoder.Must(enc.Encode(err))
 	} else {
-		seasons, err := db.Select(&seasons, "select * from seasons where show_id=?", id)
+		seasons, err := store.GetSeasonsOrRetrieveByShowId(id)
 		if err != nil {
 			return http.StatusBadRequest, encoder.Must(enc.Encode(err))
 		}

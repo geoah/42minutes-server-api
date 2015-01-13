@@ -13,10 +13,12 @@ type Model interface {
 
 // The Store interface defines methods to manipulate items.
 type Store interface {
-	GetFromDb(id int) (*Show, error)
-	GetOrRetrieve(id int) (*Show, error)
+	GetShows() ([]*Show, error)
+	GetShow(id int) (*Show, error)
+	GetShowOrRetrieve(id int) (*Show, error)
+	GetSeasonsByShowId(id int) ([]*Season, error)
+	GetSeasonsOrRetrieveByShowId(id int) ([]*Season, error)
 	// GetOrRetrieveByTraktShow(p *trakt.Show) (*Show, error)
-	GetAll() ([]Show, error)
 	Upsert(p *Show) (int, error)
 	Delete(p *Show) (int, error)
 }
@@ -25,50 +27,23 @@ type ShowStore struct {
 	Db *gorp.DbMap
 }
 
-// GetAll returns all Shows
-func (store *ShowStore) GetAll() ([]Show, error) {
-	var shows []Show = make([]Show, 0)
-	var showsTemp []Show
-	_, err := store.Db.Select(&showsTemp, "select id from shows order by id desc")
-	if err != nil {
-		return nil, err
-	}
-	for _, show := range showsTemp {
-		ashow, _ := store.GetFromDb(show.ID)
-		shows = append(shows, *ashow)
-	}
-	return shows, nil
+func (store *ShowStore) GetShows() ([]*Show, error) {
+	var shows []*Show = make([]*Show, 0)
+	_, err := store.Db.Select(&shows, "select * from shows order by id desc")
+	return shows, err
 }
 
-// Get returns a single Show identified by its id, or nil
-func (store *ShowStore) GetFromDb(id int) (*Show, error) {
-	show := Show{}
-	err := store.Db.SelectOne(&show, "select * from shows where id=?", id)
-	if err != nil {
-		return &show, err
-	}
-	show.Seasons = make([]Season, 0)
-	_, err = store.Db.Select(&show.Seasons, "select * from seasons where show_id=?", show.ID)
-	if err != nil {
-		log.Println("Error while filling in seasons", err)
-	}
-	for season_i, season := range show.Seasons {
-		// this is required as rance copies the records
-		show.Seasons[season_i].Episodes = make([]Episode, 0)
-		_, err = store.Db.Select(&show.Seasons[season_i].Episodes, "select * from episodes where show_id=? and season=?", show.ID, season.Season)
-		if err != nil {
-			log.Println("Error while filling in episodes", err)
-		}
-	}
-	return &show, nil
+func (store *ShowStore) GetShow(showId int) (*Show, error) {
+	var show Show = Show{}
+	err := store.Db.SelectOne(&show, "select * from shows where id=?", showId)
+	return &show, err
 }
 
-// Get returns a single Show identified by its id, if the episode doesn't exist it retrieves it and stores it
-func (store *ShowStore) GetOrRetrieve(traktID int) (*Show, error) {
-	show, err := store.GetFromDb(traktID)
+func (store *ShowStore) GetShowOrRetrieve(showId int) (*Show, error) {
+	show, err := store.GetShow(showId)
 	if err == sql.ErrNoRows {
 		log.Printf(" > Show does not exist locally")
-		show.UpdateInfoByTraktID(traktID)
+		show.UpdateInfoByTraktID(showId)
 		store.Upsert(show)
 	} else if err != nil {
 		log.Println("TODO error", err)
@@ -77,19 +52,41 @@ func (store *ShowStore) GetOrRetrieve(traktID int) (*Show, error) {
 	return show, nil
 }
 
-// func (store *ShowStore) GetOrRetrieveByTraktShow(traktShow *trakt.Show) (*Show, error) {
-// 	log.Printf("Trying to retrieve show:%d", traktShow.Ids.Trakt)
-// 	show, err := store.GetFromDb(traktShow.Ids.Trakt)
-// 	if err == sql.ErrNoRows {
-// 		log.Printf(" > Show does not exist locally")
-// 		show.MapInfo(*traktShow)
-// 		store.Upsert(show)
-// 	} else if err != nil {
-// 		log.Println("TODO error", err)
-// 		return show, err
-// 	}
-// 	return show, nil
-// }
+func (store *ShowStore) GetSeasonsByShowId(showId int) ([]*Season, error) {
+	var seasons []*Season = make([]*Season, 0)
+	_, err := store.Db.Select(&seasons, "select * from seasons where show_id=?", showId)
+	return seasons, err
+}
+
+func (store *ShowStore) GetSeasonsOrRetrieveByShowId(showId int) ([]*Season, error) {
+	log.Printf("Trying to retrieve seasons for showid:%d\n", showId)
+	var seasons []*Season = make([]*Season, 0)
+	_, err := store.Db.Select(&seasons, "select * from seasons where show_id=?", showId)
+	if err == sql.ErrNoRows || len(seasons) == 0 {
+		log.Printf(" > Show's seasons do not exist locally")
+		trakt := GetTraktSession()
+		traktSeasons, err := trakt.Seasons().All(showId)
+		if err.HasError() == false {
+			for _, traktSeason := range traktSeasons {
+				season := Season{}
+				season.MapInfo(traktSeason)
+				season.ShowID = showId
+				seasons = append(seasons, &season)
+				// Cache
+				go func(season *Season) {
+					db := GetDbSession()
+					log.Printf("Trying to insert season:%d:%d", season.ShowID, season.Season)
+					err := db.Insert(season)
+					log.Println(err)
+				}(&season)
+			}
+		}
+	} else if err != nil {
+		log.Println("TODO error", err)
+		return seasons, err
+	}
+	return seasons, err
+}
 
 // Upsert inserts or updates a Show and returns count of inserted/updated records
 func (store *ShowStore) Upsert(show *Show) (int, error) {
@@ -151,7 +148,7 @@ func ShowFindAllByName(name string, maxResults int) ([]*Show, error) {
 			// TODO Currently the api doesn't support properly getting extended info on search
 			// so season and episodes were missing a lot of data.
 			// newShow, err := store.GetOrRetrieveByTraktShow(&traktShow)
-			newShow, err := store.GetOrRetrieve(traktShow.Show.Ids.Trakt)
+			newShow, err := store.GetShowOrRetrieve(traktShow.Show.Ids.Trakt)
 			if err == nil && newShow.TraktID > 0 {
 				shows = append(shows, newShow)
 			}

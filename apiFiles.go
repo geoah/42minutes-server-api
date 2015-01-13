@@ -10,8 +10,51 @@ import (
 	"github.com/twinj/uuid"
 	"io/ioutil"
 	// "log"
+	"fmt"
 	"net/http"
+	// "regexp"
+	"strings"
 )
+
+func ApiProcessFiles(userId string) {
+	db := GetDbSession()
+
+	// patterns := []*regexp.Regexp{
+	// 	regexp.MustCompile("[Ss]([0-9]+)[][ ._-]*[Ee]([0-9]+)([^\\/]*).(avi|mkv)$"),
+	// 	regexp.MustCompile(`[\\/\._ \[\(-]([0-9]+)x([0-9]+)([^\\/]*).(avi|mkv)$`),
+	// }
+	var userFiles []UserFile
+
+	_, err := db.Select(&userFiles, "select * from users_files where processed=0 and user_id=?", userId)
+	if err == nil {
+		for index, userFile := range userFiles {
+			// fmt.Println(userFile, index)
+			var seriesName string
+			seps := [2]string{"\\", "/"}
+			for _, sep := range seps {
+				pathElems := strings.Split(userFile.RelativePath, sep)
+				if len(pathElems) > 1 {
+					seriesName = pathElems[0]
+					break
+				} else {
+					seriesName = ""
+				}
+			}
+			// fmt.Println(seriesName)
+			show, err := ShowFindAllByName(seriesName, 1)
+			if err == nil {
+				// fmt.Println(show[0].Title)
+				userFiles[index].ShowID = show[0].ID
+				_, err := db.Update(&userFiles[index])
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+		}
+	} else {
+		fmt.Println(err)
+	}
+}
 
 func ApiFilesPost(r *http.Request, enc encoder.Encoder, store Store, parms martini.Params) (int, []byte) {
 	db := GetDbSession()
@@ -46,5 +89,7 @@ func ApiFilesPost(r *http.Request, enc encoder.Encoder, store Store, parms marti
 			// TODO Error
 		}
 	}
+	//Temp call for testing
+	go ApiProcessFiles(user.ID)
 	return http.StatusOK, encoder.Must(enc.Encode(userFiles))
 }

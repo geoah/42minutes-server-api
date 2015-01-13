@@ -33,6 +33,7 @@ func init() {
 	r.Get(`/shows/:showId/seasons/:seasonNumber/episodes`, ApiEpisodesGetAllByShowAndSeason)
 	r.Post(`/files`, ApiFilesPost)
 	r.Get(`/register`, ApiUsersRegister)
+	r.Patch(`/files`, ApiProcessFiles)
 
 	// Allow CORS
 	m.Use(cors.Allow(&cors.Options{

@@ -78,7 +78,7 @@ func (store *ShowStore) GetSeasonsOrRetrieveByShowId(showId int) ([]*Season, err
 				go func(season *Season) {
 					db := GetDbSession()
 					log.Printf("Trying to insert season:%d:%d", season.ShowID, season.Season)
-					err := db.Insert(season)
+					db.Insert(season)
 				}(&season)
 			}
 		}
@@ -114,7 +114,7 @@ func (store *ShowStore) GetEpisodesOrRetrieveByShowIdAndSeason(showId int, seaso
 				go func(episode *Episode) {
 					db := GetDbSession()
 					log.Printf("Trying to insert episode:%d:%d:%d", episode.ShowID, episode.Season, episode.Episode)
-					err := db.Insert(episode)
+					db.Insert(episode)
 				}(&episode)
 			}
 		}

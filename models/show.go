@@ -2,48 +2,50 @@ package models
 
 import (
 	"fmt"
-	"github.com/42minutes/go-trakt"
 	"log"
+
+	"github.com/42minutes/go-trakt"
 )
 
 type Show struct {
-	ID                int      `json:"id" db:"id"`
-	TmdbID            int      `json:"tmdb_id" db:"tmdb_id"`
-	TraktID           int      `json:"trakt_id" db:"trakt_id"`
-	TvdbID            int      `json:"tvdb_id" db:"tvdb_id"`
-	TvrageID          int      `json:"tvrage_id" db:"tvrage_id"`
-	AirDay            string   `json:"air_day" db:"air_day"`
-	AirTime           string   `json:"air_time" db:"air_time"`
-	AirTimezone       string   `json:"air_timezone" db:"air_timezone"`
-	AiredEpisodes     int      `json:"aired_episodes" db:"aired_episodes"`
-	Certification     string   `json:"certification" db:"certification"`
-	Country           string   `json:"country" db:"country"`
-	FirstAired        string   `json:"first_aired" db:"first_aired"`
-	Homepage          string   `json:"homepage" db:"homepage"`
-	ImageBannerFull   string   `json:"image_banner_full" db:"image_banner_full"`
-	ImageClearartFull string   `json:"image_clearart_full" db:"image_clearart_full"`
-	ImageFanartFull   string   `json:"image_fanart_full" db:"image_fanart_full"`
-	ImageFanartMedium string   `json:"image_fanart_medium" db:"image_fanart_medium"`
-	ImageFanartThumb  string   `json:"image_fanart_thumb" db:"image_fanart_thumb"`
-	ImageLogoFull     string   `json:"image_logo_full" db:"image_logo_full"`
-	ImagePosterFull   string   `json:"image_poster_full" db:"image_poster_full"`
-	ImagePosterMedium string   `json:"image_poster_medium" db:"image_poster_medium"`
-	ImagePosterThumb  string   `json:"image_poster_thumb" db:"image_poster_thumb"`
-	ImageThumbFull    string   `json:"image_thumb_full" db:"image_thumb_full"`
-	ImdbID            string   `json:"imdb_id" db:"imdb_id"`
-	Language          string   `json:"language" db:"language"`
-	Network           string   `json:"network" db:"network"`
-	Overview          string   `json:"overview" db:"overview"`
-	Rating            float64  `json:"rating" db:"rating"`
-	Runtime           float64  `json:"runtime" db:"runtime"`
-	Slug              string   `json:"slug" db:"slug"`
-	Status            string   `json:"status" db:"status"`
-	Title             string   `json:"title" db:"title"`
-	Trailer           string   `json:"trailer" db:"trailer"`
-	UpdatedAt         string   `json:"updated_at" db:"updated_at"`
-	Votes             int      `json:"votes" db:"votes"`
-	Year              int      `json:"year" db:"year"`
-	Seasons           []Season `json:"seasons" db:"-"`
+	ID                int     `json:"id" db:"id"`
+	TmdbID            int     `json:"tmdb_id" db:"tmdb_id"`
+	TraktID           int     `json:"trakt_id" db:"trakt_id"`
+	TvdbID            int     `json:"tvdb_id" db:"tvdb_id"`
+	TvrageID          int     `json:"tvrage_id" db:"tvrage_id"`
+	AirDay            string  `json:"air_day" db:"air_day"`
+	AirTime           string  `json:"air_time" db:"air_time"`
+	AirTimezone       string  `json:"air_timezone" db:"air_timezone"`
+	AiredEpisodes     int     `json:"aired_episodes" db:"aired_episodes"`
+	Certification     string  `json:"certification" db:"certification"`
+	Country           string  `json:"country" db:"country"`
+	FirstAired        string  `json:"first_aired" db:"first_aired"`
+	Homepage          string  `json:"homepage" db:"homepage"`
+	ImageBannerFull   string  `json:"image_banner_full" db:"image_banner_full"`
+	ImageClearartFull string  `json:"image_clearart_full" db:"image_clearart_full"`
+	ImageFanartFull   string  `json:"image_fanart_full" db:"image_fanart_full"`
+	ImageFanartMedium string  `json:"image_fanart_medium" db:"image_fanart_medium"`
+	ImageFanartThumb  string  `json:"image_fanart_thumb" db:"image_fanart_thumb"`
+	ImageLogoFull     string  `json:"image_logo_full" db:"image_logo_full"`
+	ImagePosterFull   string  `json:"image_poster_full" db:"image_poster_full"`
+	ImagePosterMedium string  `json:"image_poster_medium" db:"image_poster_medium"`
+	ImagePosterThumb  string  `json:"image_poster_thumb" db:"image_poster_thumb"`
+	ImageThumbFull    string  `json:"image_thumb_full" db:"image_thumb_full"`
+	ImdbID            string  `json:"imdb_id" db:"imdb_id"`
+	Language          string  `json:"language" db:"language"`
+	Network           string  `json:"network" db:"network"`
+	Overview          string  `json:"overview" db:"overview"`
+	Rating            float64 `json:"rating" db:"rating"`
+	Runtime           float64 `json:"runtime" db:"runtime"`
+	Slug              string  `json:"slug" db:"slug"`
+	Status            string  `json:"status" db:"status"`
+	Title             string  `json:"title" db:"title"`
+	Trailer           string  `json:"trailer" db:"trailer"`
+	UpdatedAt         string  `json:"updated_at" db:"updated_at"`
+	Votes             int     `json:"votes" db:"votes"`
+	Year              int     `json:"year" db:"year"`
+	Favorite          string  `json:"favorite" db:"-"`
+	// Seasons           []Season `json:"seasons" db:"-"`
 }
 
 func (s *Show) MapInfo(traktShow trakt.Show) {
@@ -84,7 +86,7 @@ func (s *Show) MapInfo(traktShow trakt.Show) {
 	s.Votes = traktShow.Votes
 	s.Year = traktShow.Year
 
-	s.Seasons = make([]Season, 0)
+	// s.Seasons = make([]Season, 0)
 	// for _, aseason := range traktShow.Seasons {
 	// 	season := Season{}
 	// 	season.ShowID = s.ID

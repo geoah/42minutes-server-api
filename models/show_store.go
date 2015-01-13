@@ -18,6 +18,8 @@ type Store interface {
 	GetShowOrRetrieve(id int) (*Show, error)
 	GetSeasonsByShowId(id int) ([]*Season, error)
 	GetSeasonsOrRetrieveByShowId(id int) ([]*Season, error)
+	GetEpisodesByShowIdAndSeason(id int, seasonNumber int) ([]*Episode, error)
+	GetEpisodesOrRetrieveByShowIdAndSeason(id int, seasonNumber int) ([]*Episode, error)
 	// GetOrRetrieveByTraktShow(p *trakt.Show) (*Show, error)
 	Upsert(p *Show) (int, error)
 	Delete(p *Show) (int, error)
@@ -86,6 +88,43 @@ func (store *ShowStore) GetSeasonsOrRetrieveByShowId(showId int) ([]*Season, err
 		return seasons, err
 	}
 	return seasons, err
+}
+
+func (store *ShowStore) GetEpisodesByShowIdAndSeason(showId int, seasonNumber int) ([]*Episode, error) {
+	var episodes []*Episode = make([]*Episode, 0)
+	_, err := store.Db.Select(&episodes, "select * from episodes where show_id=? and season=?", showId, seasonNumber)
+	return episodes, err
+}
+
+func (store *ShowStore) GetEpisodesOrRetrieveByShowIdAndSeason(showId int, seasonNumber int) ([]*Episode, error) {
+	log.Printf("Trying to retrieve episodes for showid:%d season:%d\n", showId, seasonNumber)
+	var episodes []*Episode = make([]*Episode, 0)
+	_, err := store.Db.Select(&episodes, "select * from episodes where show_id=? and season=?", showId, seasonNumber)
+	if err == sql.ErrNoRows || len(episodes) == 0 {
+		log.Printf(" > Show's episodes do not exist locally")
+		trakt := GetTraktSession()
+		traktEpisodes, err := trakt.Episodes().AllBySeason(showId, seasonNumber)
+		if err.HasError() == false {
+			for _, traktEpisode := range traktEpisodes {
+				episode := Episode{}
+				episode.MapInfo(traktEpisode)
+				episode.ShowID = showId
+				episode.Season = seasonNumber
+				episodes = append(episodes, &episode)
+				// Cache
+				go func(episode *Episode) {
+					db := GetDbSession()
+					log.Printf("Trying to insert episode:%d:%d:%d", episode.ShowID, episode.Season, episode.Episode)
+					err := db.Insert(episode)
+					log.Println(err)
+				}(&episode)
+			}
+		}
+	} else if err != nil {
+		log.Println("TODO error", err)
+		return episodes, err
+	}
+	return episodes, err
 }
 
 // Upsert inserts or updates a Show and returns count of inserted/updated records

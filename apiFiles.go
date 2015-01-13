@@ -3,12 +3,13 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"io/ioutil"
+
 	. "github.com/42minutes/42minutes-server-api/models"
 	"github.com/codegangsta/martini-contrib/encoder"
 	_ "github.com/garfunkel/go-tvdb"
 	"github.com/go-martini/martini"
 	"github.com/twinj/uuid"
-	"io/ioutil"
 	// "log"
 	"fmt"
 	"net/http"
@@ -32,7 +33,8 @@ func ApiProcessFiles(userId string) {
 			var seriesName string
 			seps := [2]string{"\\", "/"}
 			for _, sep := range seps {
-				pathElems := strings.Split(userFile.RelativePath, sep)
+				relativePath := strings.TrimLeft(userFile.RelativePath, "/\\")
+				pathElems := strings.Split(relativePath, sep)
 				if len(pathElems) > 1 {
 					seriesName = pathElems[0]
 					break

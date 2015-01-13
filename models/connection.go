@@ -6,18 +6,16 @@ import (
 	"os"
 
 	"github.com/42minutes/go-trakt"
-	"github.com/coopernurse/gorp"
-	_ "github.com/ziutek/mymysql/autorc"
-	_ "github.com/ziutek/mymysql/godrv"
-	_ "github.com/ziutek/mymysql/mysql"
-	_ "github.com/ziutek/mymysql/thrsafe"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jinzhu/gorm"
+	_ "github.com/lib/pq"
 )
 
 var dbmap *gorp.DbMap
 var traktClient *trakt.Client
 var store Store
 
-func GetDbSession() *gorp.DbMap {
+func GetDbSession() *gorm.DB {
 	if dbmap != nil {
 		return dbmap
 	}
@@ -37,27 +35,27 @@ func GetDbSession() *gorp.DbMap {
 	}
 
 	if os.Getenv("DB_NAME") != "" {
-		db_uri += "*" + os.Getenv("DB_NAME")
+		db_uri += "/" + os.Getenv("DB_NAME")
 	} else {
-		db_uri += "*42minutes"
+		db_uri += "/42minutes"
 	}
 
 	if os.Getenv("DB_USER") != "" && os.Getenv("DB_PASS") != "" {
-		db_uri += "/" + os.Getenv("DB_USER") + "/" + os.Getenv("DB_PASS")
+		db_uri = os.Getenv("DB_USER") + ":" + os.Getenv("DB_PASS") + "@" + db_uri
 	}
+
+	db_uri += "?charset=utf8&parseTime=True"
 
 	log.Println("Connecting to", db_uri)
 
 	// connect to db using standard Go database/sql API
 	// use whatever database/sql driver you wish
-	db, err := sql.Open("mymysql", db_uri)
-	checkErr(err, "sql.Open failed")
-
-	// construct a gorp DbMap
-	dbmap = &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
-	// defer dbmap.Db.Close()
+	db, err := gorm.Open("mysql", db_uri)
+	db.DB()
 
 	// add tables
+	db.AutoMigrate(&Show{}, &Season{}, &Episode{}, &UserShow{}, &UserSeason{}, &UserEpisode{}, &User{}, &UserFile{})
+
 	dbmap.AddTableWithName(Show{}, "shows").SetKeys(false, "id")
 	dbmap.AddTableWithName(Season{}, "seasons").SetKeys(false, "show_id", "season")
 	dbmap.AddTableWithName(Episode{}, "episodes").SetKeys(false, "show_id", "season", "episode")

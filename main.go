@@ -30,6 +30,7 @@ func init() {
 	r.Get(`/shows`, ApiShowsGetAll)
 	r.Get(`/shows/:id`, ApiShowsGetOne)
 	r.Post(`/files`, ApiFilesPost)
+	r.Get(`/register`, ApiUsersRegister)
 
 	// Allow CORS
 	m.Use(cors.Allow(&cors.Options{

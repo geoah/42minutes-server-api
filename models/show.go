@@ -98,11 +98,10 @@ func (s *Show) UpdateInfoByTraktID(traktID int) {
 	var trakt trakt.Client = *GetTraktSession()
 	log.Printf("Trying to retrieve information for show:traktid:%d", traktID)
 	show, result := trakt.Shows().One(traktID)
-	fmt.Println("SHOWXX", show)
 	if result.HasError() == false {
 		s.MapInfo(*show)
 	} else {
-		fmt.Println("ERROR", result.Error())
+		fmt.Println("UpdateInfoByTraktID:ERROR", result.Error())
 	}
 }
 

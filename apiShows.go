@@ -41,16 +41,28 @@ func ApiShowsGetAll(r *http.Request, enc encoder.Encoder, store Store) (int, []b
 }
 
 func ApiShowsGetOne(r *http.Request, enc encoder.Encoder, store Store, parms martini.Params) (int, []byte) {
+	db := GetDbSession()
+
 	id, err := strconv.Atoi(parms["id"])
 	if err != nil {
 		return http.StatusBadRequest, encoder.Must(enc.Encode(err))
-	} else {
-		show, err := store.GetShowOrRetrieve(id)
-		if err != nil {
-			return http.StatusBadRequest, encoder.Must(enc.Encode(err))
-		}
-		return http.StatusOK, encoder.Must(enc.Encode(show))
 	}
+
+	// TODO Replace with middleware
+	token := r.Header.Get("X-API-TOKEN")
+	user := User{}
+	err = db.SelectOne(&user, "select * from users where token=?", token)
+	if err != nil {
+		return http.StatusUnauthorized, encoder.Must(enc.Encode(NewError(ErrCodeNotExist, "Error")))
+	}
+
+	show, err := store.GetShowOrRetrieve(id)
+	if err != nil {
+		return http.StatusBadRequest, encoder.Must(enc.Encode(err))
+	}
+	show.Personalize(user.ID)
+	return http.StatusOK, encoder.Must(enc.Encode(show))
+
 }
 
 func ApiShowsPutOne(r *http.Request, enc encoder.Encoder, store Store, parms martini.Params) (int, []byte) {

@@ -107,6 +107,18 @@ func (s *Show) UpdateInfoByTraktID(traktID int) {
 	}
 }
 
+// Personalize updates show with additional information for a specific user
+func (s *Show) Personalize(userID string) {
+	db := GetDbSession()
+	userShow := UserShow{}
+	err := db.SelectOne(&userShow, "select * from users_shows where user_id=? and show_id=?", userID, s.ID)
+	if err == nil {
+		s.Favorite = userShow.Favorite
+	}
+	fmt.Println(err)
+	fmt.Println(userID, userShow.ShowID, userShow.Favorite)
+}
+
 // Get detailed information from tvdbcom
 // func (s *Show) FetchDetails() {
 // 	if s.Matched == true {

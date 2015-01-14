@@ -13,25 +13,30 @@ import (
 	// "log"
 	"fmt"
 	"net/http"
-	// "regexp"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
 func ApiProcessFiles(userId string) {
-	db := GetDbSession()
+	patterns := []*regexp.Regexp{
+		regexp.MustCompile("[Ss]([0-9]+)[][ ._-]*[Ee]([0-9]+)([^\\/]*).(avi|mkv)$"),
+		regexp.MustCompile(`[\\/\._ \[\(-]([0-9]+)x([0-9]+)([^\\/]*).(avi|mkv)$`),
+	}
 
-	// patterns := []*regexp.Regexp{
-	// 	regexp.MustCompile("[Ss]([0-9]+)[][ ._-]*[Ee]([0-9]+)([^\\/]*).(avi|mkv)$"),
-	// 	regexp.MustCompile(`[\\/\._ \[\(-]([0-9]+)x([0-9]+)([^\\/]*).(avi|mkv)$`),
-	// }
 	var userFiles []UserFile
 	seriesIDs := make(map[string]int)
+
+	db := GetDbSession()
 
 	_, err := db.Select(&userFiles, "select * from users_files where processed=0 and user_id=?", userId)
 	if err == nil {
 		for index, userFile := range userFiles {
 			// fmt.Println(userFile, index)
 			var seriesName string
+			var seasonID int
+			var episodeID int
+			var seriesID int
 
 			seps := [2]string{"\\", "/"}
 
@@ -45,8 +50,15 @@ func ApiProcessFiles(userId string) {
 					seriesName = ""
 				}
 			}
-			// fmt.Println(seriesName)
-			var seriesID int
+
+			for _, pattern := range patterns {
+				matches := pattern.FindAllStringSubmatch(userFile.RelativePath, -1)
+				if len(matches) > 0 && len(matches[0]) > 0 {
+					seasonID, _ = strconv.Atoi(matches[0][1])
+					episodeID, _ = strconv.Atoi(matches[0][2])
+					break
+				}
+			}
 
 			if val, ok := seriesIDs[seriesName]; ok {
 				seriesID = val
@@ -57,8 +69,11 @@ func ApiProcessFiles(userId string) {
 					seriesID = show[0].ID
 				}
 			}
-			// fmt.Println(show[0].Title)
+
 			userFiles[index].ShowID = seriesID
+			userFiles[index].EpisodeID = episodeID
+			userFiles[index].SeasonID = seasonID
+
 			_, err := db.Update(&userFiles[index])
 			if err != nil {
 				fmt.Println(err)

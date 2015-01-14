@@ -77,6 +77,7 @@ func ApiShowsPutOne(r *http.Request, enc encoder.Encoder, store Store, parms mar
 		return http.StatusBadRequest, encoder.Must(enc.Encode(err))
 	}
 
+	// TODO Replace with middleware
 	token := r.Header.Get("X-API-TOKEN")
 	user := User{}
 	err = db.SelectOne(&user, "select * from users where token=?", token)

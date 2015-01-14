@@ -19,7 +19,7 @@ type Store interface {
 	GetSeasonsOrRetrieveByShowId(id int) ([]*Season, error)
 	GetEpisodesByShowIdAndSeason(id int, seasonNumber int) ([]*Episode, error)
 	GetEpisodesOrRetrieveByShowIdAndSeason(id int, seasonNumber int) ([]*Episode, error)
-	// GetOrRetrieveByTraktShow(p *trakt.Show) (*Show, error)
+	UserShowUpsert(p *UserShow) error
 	Delete(p *Show) (int, error)
 }
 
@@ -158,4 +158,12 @@ func ShowFindAllByName(name string, maxResults int) ([]*Show, error) {
 		}
 	}
 	return shows, nil
+}
+
+func (store *ShowStore) UserShowUpsert(userShow *UserShow) error {
+	err := store.Db.Insert(userShow)
+	if err != nil {
+		_, err = store.Db.Update(userShow)
+	}
+	return err
 }

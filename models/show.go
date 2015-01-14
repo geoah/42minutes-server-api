@@ -44,7 +44,7 @@ type Show struct {
 	UpdatedAt         string  `json:"updated_at" db:"updated_at"`
 	Votes             int     `json:"votes" db:"votes"`
 	Year              int     `json:"year" db:"year"`
-	Favorite          string  `json:"favorite" db:"-"`
+	Favorite          bool    `json:"favorite" db:"-"`
 	// Seasons           []Season `json:"seasons" db:"-"`
 }
 

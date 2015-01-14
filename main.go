@@ -1,13 +1,14 @@
 package main
 
 import (
+	"log"
+	"net/http"
+	"os"
+
 	. "github.com/42minutes/42minutes-server-api/models"
 	"github.com/codegangsta/martini-contrib/encoder"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/cors"
-	"log"
-	"net/http"
-	"os"
 )
 
 // Martini instance
@@ -29,11 +30,12 @@ func init() {
 	r := martini.NewRouter()
 	r.Get(`/shows`, ApiShowsGetAll)
 	r.Get(`/shows/:id`, ApiShowsGetOne)
+	r.Put(`/shows/:id`, ApiShowsPutOne)
 	r.Get(`/shows/:showId/seasons`, ApiSeasonsGetAllByShow)
 	r.Get(`/shows/:showId/seasons/:seasonNumber/episodes`, ApiEpisodesGetAllByShowAndSeason)
 	r.Post(`/files`, ApiFilesPost)
-	r.Get(`/register`, ApiUsersRegister)
 	r.Patch(`/files`, ApiProcessFiles)
+	r.Get(`/register`, ApiUsersRegister)
 
 	// Allow CORS
 	m.Use(cors.Allow(&cors.Options{

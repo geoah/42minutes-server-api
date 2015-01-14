@@ -1,14 +1,17 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"strconv"
+
 	. "github.com/42minutes/42minutes-server-api/models"
 	"github.com/codegangsta/martini-contrib/encoder"
 	_ "github.com/garfunkel/go-tvdb"
 	"github.com/go-martini/martini"
-	"log"
-	"net/http"
-	"strconv"
 )
 
 func ApiShowsGetAll(r *http.Request, enc encoder.Encoder, store Store) (int, []byte) {
@@ -48,4 +51,39 @@ func ApiShowsGetOne(r *http.Request, enc encoder.Encoder, store Store, parms mar
 		}
 		return http.StatusOK, encoder.Must(enc.Encode(show))
 	}
+}
+
+func ApiShowsPutOne(r *http.Request, enc encoder.Encoder, store Store, parms martini.Params) (int, []byte) {
+	db := GetDbSession()
+
+	id, err := strconv.Atoi(parms["id"])
+	if err != nil {
+		return http.StatusBadRequest, encoder.Must(enc.Encode(err))
+	}
+	show, err := store.GetShowOrRetrieve(id)
+	if err != nil {
+		return http.StatusBadRequest, encoder.Must(enc.Encode(err))
+	}
+
+	token := r.Header.Get("X-API-TOKEN")
+	user := User{}
+	err = db.SelectOne(&user, "select * from users where token=?", token)
+	if err != nil {
+		return http.StatusUnauthorized, encoder.Must(enc.Encode(NewError(ErrCodeNotExist, "Error")))
+	}
+
+	var showPost Show
+	body, _ := ioutil.ReadAll(r.Body)
+	r.Body.Close()
+	err = json.Unmarshal(body, &showPost)
+	if err != nil {
+		return http.StatusNotFound, encoder.Must(enc.Encode(NewError(ErrCodeNotExist, "Could not decode body")))
+	}
+
+	userShow := UserShow{UserID: user.ID, ShowID: show.ID, Favorite: showPost.Favorite}
+	err = store.UserShowUpsert(&userShow)
+
+	show.Personalize(user.ID)
+
+	return http.StatusOK, encoder.Must(enc.Encode(show))
 }

@@ -2,6 +2,8 @@ package models
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
 	"log"
 
 	"github.com/coopernurse/gorp"
@@ -19,6 +21,7 @@ type Store interface {
 	GetSeasonsOrRetrieveByShowId(id int) ([]*Season, error)
 	GetEpisodesByShowIdAndSeason(id int, seasonNumber int) ([]*Episode, error)
 	GetEpisodesOrRetrieveByShowIdAndSeason(id int, seasonNumber int) ([]*Episode, error)
+	GetShowOrRetrieveFromTitle(showName string) (*Show, error)
 	UserShowUpsert(p *UserShow) error
 	Delete(p *Show) (int, error)
 }
@@ -135,6 +138,39 @@ func (store *ShowStore) Delete(show *Show) (int, error) {
 		return 0, err
 	}
 	return 1, nil
+}
+
+func (store *ShowStore) GetShowOrRetrieveFromTitle(showTitle string) (*Show, error) {
+	var show *Show
+	var showMatch ShowMatch = ShowMatch{}
+	err := store.Db.SelectOne(&showMatch, "select * from shows_matches where title=?", showTitle)
+	fmt.Println("GetShowOrRetrieveFromTitle:SelectOne(showMatch)>err", err)
+	if err == nil {
+		show, err = store.GetShowOrRetrieve(showMatch.ShowID)
+		fmt.Println("GetShowOrRetrieveFromTitle:GetShowOrRetrieve(show)>err", err)
+		// show = showTmp
+	} else if err == sql.ErrNoRows {
+		log.Printf(" > Show could not be matched locally")
+		shows, err := ShowFindAllByName(showTitle, 1)
+		fmt.Println("GetShowOrRetrieveFromTitle:ShowFindAllByName()>err", err)
+		if len(shows) == 0 {
+			err = errors.New("Could not find any matches.")
+		}
+		if err == nil {
+			show = shows[0]
+			// Cache
+			if err == nil {
+				showMatch.ShowID = show.ID
+				showMatch.Title = showTitle
+				go func(showMatch *ShowMatch) {
+					db := GetDbSession()
+					log.Printf("Trying to insert showmatch:%d:%s", showMatch.ShowID, showMatch.Title)
+					db.Insert(showMatch)
+				}(&showMatch)
+			}
+		}
+	}
+	return show, err
 }
 
 func ShowFindAllByName(name string, maxResults int) ([]*Show, error) {

@@ -25,13 +25,16 @@ func ApiProcessFiles(userId string) {
 	// 	regexp.MustCompile(`[\\/\._ \[\(-]([0-9]+)x([0-9]+)([^\\/]*).(avi|mkv)$`),
 	// }
 	var userFiles []UserFile
+	seriesIDs := make(map[string]int)
 
 	_, err := db.Select(&userFiles, "select * from users_files where processed=0 and user_id=?", userId)
 	if err == nil {
 		for index, userFile := range userFiles {
 			// fmt.Println(userFile, index)
 			var seriesName string
+
 			seps := [2]string{"\\", "/"}
+
 			for _, sep := range seps {
 				relativePath := strings.TrimLeft(userFile.RelativePath, "/\\")
 				pathElems := strings.Split(relativePath, sep)
@@ -43,14 +46,22 @@ func ApiProcessFiles(userId string) {
 				}
 			}
 			// fmt.Println(seriesName)
-			show, err := ShowFindAllByName(seriesName, 1)
-			if err == nil {
-				// fmt.Println(show[0].Title)
-				userFiles[index].ShowID = show[0].ID
-				_, err := db.Update(&userFiles[index])
-				if err != nil {
-					fmt.Println(err)
+			var seriesID int
+
+			if val, ok := seriesIDs[seriesName]; ok {
+				seriesID = val
+			} else {
+				show, err := ShowFindAllByName(seriesName, 1)
+				if err == nil {
+					seriesIDs[seriesName] = show[0].ID
+					seriesID = show[0].ID
 				}
+			}
+			// fmt.Println(show[0].Title)
+			userFiles[index].ShowID = seriesID
+			_, err := db.Update(&userFiles[index])
+			if err != nil {
+				fmt.Println(err)
 			}
 		}
 	} else {

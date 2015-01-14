@@ -1,7 +1,8 @@
 package models
 
 type UserShow struct {
-	UserID int    `json:"user_id" db:"user_id"`
-	ShowID int    `json:"show_id" db:"show_id"`
-	Path   string `json:"path" db:"path"`
+	UserID   string `json:"user_id" db:"user_id"`
+	ShowID   int    `json:"show_id" db:"show_id"`
+	Favorite bool   `json:"favorite" db:"favorite"`
+	Path     string `json:"path" db:"path"`
 }

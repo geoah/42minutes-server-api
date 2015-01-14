@@ -45,3 +45,14 @@ func (e *Episode) MapInfo(traktEpisode trakt.Episode) {
 	e.UpdatedAt = traktEpisode.UpdatedAt
 	e.Votes = traktEpisode.Votes
 }
+
+// Personalize updates episode with additional information for a specific user
+func (s *Episode) Personalize(userID string) {
+	db := GetDbSession()
+	userEpisode := UserEpisode{}
+	err := db.SelectOne(&userEpisode, "select * from users_episodes where user_id=? and show_id=? and season=? and episode=", userID, s.ShowID, s.Season, s.Episode)
+	if err == nil {
+		s.Available = userEpisode.Available
+		s.Watched = userEpisode.Watched
+	}
+}

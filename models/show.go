@@ -115,8 +115,6 @@ func (s *Show) Personalize(userID string) {
 	if err == nil {
 		s.Favorite = userShow.Favorite
 	}
-	fmt.Println(err)
-	fmt.Println(userID, userShow.ShowID, userShow.Favorite)
 }
 
 // Get detailed information from tvdbcom

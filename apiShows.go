@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -15,29 +14,40 @@ import (
 )
 
 func ApiShowsGetAll(r *http.Request, enc encoder.Encoder, store Store) (int, []byte) {
+	db := GetDbSession()
+
+	// TODO Replace with middleware
+	token := r.Header.Get("X-API-TOKEN")
+	user := User{}
+	err := db.SelectOne(&user, "select * from users where token=?", token)
+	if err != nil {
+		return http.StatusUnauthorized, encoder.Must(enc.Encode(NewError(ErrCodeNotExist, "Error")))
+	}
+
+	var shows []*Show
 	if r.URL.Query().Get("name") == "" {
-		show, err := store.GetShows()
+		shows, err = store.GetShows()
 		if err != nil {
-			log.Println(err)
-			return http.StatusNotFound, encoder.Must(enc.Encode(
-				NewError(ErrCodeNotExist, fmt.Sprintf("TODO error"))))
+			return http.StatusNotFound, encoder.Must(enc.Encode(NewError(ErrCodeNotExist, fmt.Sprintf("TODO error"))))
 		}
-		return http.StatusOK, encoder.Must(enc.Encode(show))
 	} else {
 		name := r.URL.Query().Get("name")
-		fmt.Println("Trying to look for show.", name)
-		show, err := ShowFindAllByName(name, 5)
+		fmt.Println("Looking for show...", name)
+		shows, err = ShowFindAllByName(name, 5)
 		if err != nil {
-			log.Println(err)
 			return http.StatusNotFound, encoder.Must(enc.Encode(
 				NewError(ErrCodeNotExist, fmt.Sprintf("TODO error"))))
 		}
-		if len(show) == 0 {
-			return http.StatusNotFound, encoder.Must(enc.Encode(
-				NewError(ErrCodeNotExist, fmt.Sprintf("could not find Show with name '%s'", name))))
+		if len(shows) == 0 {
+			return http.StatusNotFound, encoder.Must(enc.Encode(NewError(ErrCodeNotExist, fmt.Sprintf("could not find Show with name '%s'", name))))
 		}
-		return http.StatusOK, encoder.Must(enc.Encode(show))
 	}
+
+	for show_i, _ := range shows {
+		shows[show_i].Personalize(user.ID)
+	}
+
+	return http.StatusOK, encoder.Must(enc.Encode(shows))
 }
 
 func ApiShowsGetOne(r *http.Request, enc encoder.Encoder, store Store, parms martini.Params) (int, []byte) {

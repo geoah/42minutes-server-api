@@ -144,15 +144,11 @@ func (store *ShowStore) GetShowOrRetrieveFromTitle(showTitle string) (*Show, err
 	var show *Show
 	var showMatch ShowMatch = ShowMatch{}
 	err := store.Db.SelectOne(&showMatch, "select * from shows_matches where title=?", showTitle)
-	fmt.Println("GetShowOrRetrieveFromTitle:SelectOne(showMatch)>err", err)
 	if err == nil {
 		show, err = store.GetShowOrRetrieve(showMatch.ShowID)
-		fmt.Println("GetShowOrRetrieveFromTitle:GetShowOrRetrieve(show)>err", err)
-		// show = showTmp
 	} else if err == sql.ErrNoRows {
 		log.Printf(" > Show could not be matched locally")
 		shows, err := ShowFindAllByName(showTitle, 1)
-		fmt.Println("GetShowOrRetrieveFromTitle:ShowFindAllByName()>err", err)
 		if len(shows) == 0 {
 			err = errors.New("Could not find any matches.")
 		}
@@ -167,7 +163,11 @@ func (store *ShowStore) GetShowOrRetrieveFromTitle(showTitle string) (*Show, err
 					log.Printf("Trying to insert showmatch:%d:%s", showMatch.ShowID, showMatch.Title)
 					db.Insert(showMatch)
 				}(&showMatch)
+			} else {
+				fmt.Println("GetShowOrRetrieveFromTitle>err", err)
 			}
+		} else {
+			fmt.Println("GetShowOrRetrieveFromTitle:ShowFindAllByName>err", err)
 		}
 	}
 	return show, err

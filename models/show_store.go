@@ -144,31 +144,40 @@ func (store *ShowStore) GetShowOrRetrieveFromTitle(showTitle string) (*Show, err
 	var show *Show
 	var showMatch ShowMatch = ShowMatch{}
 	err := store.Db.SelectOne(&showMatch, "select * from shows_matches where title=?", showTitle)
-	if err == nil {
+	if err == nil && showMatch.ShowID == 0 {
+		err = errors.New("Has been cached as unmatched.")
+		log.Printf("GetShowOrRetrieveFromTitle: Show '%s' has been found in cache with showid:0 as it could notbe matched last time", showTitle)
+
+	} else if err == nil && showMatch.ShowID > 0 {
 		show, err = store.GetShowOrRetrieve(showMatch.ShowID)
+		log.Printf("GetShowOrRetrieveFromTitle: Show '%s' has been found in cache with showid:%d", showTitle, show.ID)
+
 	} else if err == sql.ErrNoRows {
-		log.Printf(" > Show could not be matched locally")
+		log.Printf("GetShowOrRetrieveFromTitle: Show '%s' could not be found in cache", showTitle)
 		shows, err := ShowFindAllByName(showTitle, 1)
+		showMatchId := 0
+
 		if len(shows) == 0 {
-			err = errors.New("Could not find any matches.")
-		}
-		if err == nil {
+			log.Printf("GetShowOrRetrieveFromTitle: Show '%s' could not be found in Trakt", showTitle)
+			err = errors.New("Could not be matched in Trakt")
+		} else if len(shows) > 0 && err == nil {
 			show = shows[0]
-			// Cache
-			if err == nil {
-				showMatch.ShowID = show.ID
-				showMatch.Title = showTitle
-				go func(showMatch *ShowMatch) {
-					db := GetDbSession()
-					log.Printf("Trying to insert showmatch:%d:%s", showMatch.ShowID, showMatch.Title)
-					db.Insert(showMatch)
-				}(&showMatch)
-			} else {
-				fmt.Println("GetShowOrRetrieveFromTitle>err", err)
-			}
+			showMatchId = show.ID
 		} else {
 			fmt.Println("GetShowOrRetrieveFromTitle:ShowFindAllByName>err", err)
 		}
+
+		// Cache
+		showMatch.ShowID = showMatchId
+		showMatch.Title = showTitle
+		go func(showMatch *ShowMatch) {
+			db := GetDbSession()
+			log.Printf("GetShowOrRetrieveFromTitle: Caching '%s' with showid:%d", showTitle, showMatchId)
+			db.Insert(showMatch)
+		}(&showMatch)
+
+	} else {
+		fmt.Println("GetShowOrRetrieveFromTitle>err", err)
 	}
 	return show, err
 }

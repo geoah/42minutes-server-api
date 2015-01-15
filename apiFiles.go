@@ -74,6 +74,7 @@ func ApiProcessFiles(userId string) {
 			userFiles[index].ShowID = seriesID
 			userFiles[index].EpisodeID = episodeID
 			userFiles[index].SeasonID = seasonID
+			userFiles[index].Processed = true
 
 			_, err := db.Update(&userFiles[index])
 			if err != nil {

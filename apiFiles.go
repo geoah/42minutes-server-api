@@ -18,7 +18,8 @@ import (
 	"strings"
 )
 
-func ApiProcessFiles(userId string, store Store) {
+func ApiProcessFiles(userId string) {
+	store := *GetStoreSession()
 	patterns := []*regexp.Regexp{
 		regexp.MustCompile("[Ss]([0-9]+)[][ ._-]*[Ee]([0-9]+)([^\\/]*).(avi|mkv)$"),
 		regexp.MustCompile(`[\\/\._ \[\(-]([0-9]+)x([0-9]+)([^\\/]*).(avi|mkv)$`),
@@ -118,6 +119,8 @@ func ApiFilesPost(r *http.Request, enc encoder.Encoder, store Store, parms marti
 		}
 	}
 	//Temp call for testing
-	go ApiProcessFiles(user.ID, store)
+	go func(userId string) {
+		ApiProcessFiles(userId)
+	}(user.ID)
 	return http.StatusOK, encoder.Must(enc.Encode(userFiles))
 }

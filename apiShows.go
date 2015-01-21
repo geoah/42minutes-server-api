@@ -26,7 +26,7 @@ func ApiShowsGetAll(r *http.Request, enc encoder.Encoder, store Store) (int, []b
 
 	var shows []*Show
 	if r.URL.Query().Get("name") == "" {
-		shows, err = store.GetShows()
+		_, err = db.Select(&shows, "select * from shows where rating>0 && tvdb_id>0 && image_banner_full<>\"\" order by title asc")
 		if err != nil {
 			return http.StatusNotFound, encoder.Must(enc.Encode(NewError(ErrCodeNotExist, fmt.Sprintf("TODO error"))))
 		}

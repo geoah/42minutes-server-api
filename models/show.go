@@ -45,6 +45,7 @@ type Show struct {
 	Votes             int     `json:"votes" db:"votes"`
 	Year              int     `json:"year" db:"year"`
 	Favorite          bool    `json:"favorite" db:"-"`
+	Library           bool    `json:"library" db:"-"`
 	// Seasons           []Season `json:"seasons" db:"-"`
 }
 
@@ -114,6 +115,7 @@ func (s *Show) Personalize(userID string) {
 	err := db.SelectOne(&userShow, "select * from users_shows where user_id=? and show_id=?", userID, s.ID)
 	if err == nil {
 		s.Favorite = userShow.Favorite
+		s.Library = userShow.Library
 	}
 }
 

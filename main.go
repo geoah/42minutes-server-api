@@ -33,6 +33,7 @@ func init() {
 	r.Put(`/shows/:id`, ApiShowsPutOne)
 	r.Get(`/shows/:showId/seasons`, ApiSeasonsGetAllByShow)
 	r.Get(`/shows/:showId/seasons/:seasonNumber/episodes`, ApiEpisodesGetAllByShowAndSeason)
+	r.Get(`/shows/:showId/seasons/:seasonNumber/episodes/:episodeNumber`, ApiEpisodesGetOneByShowAndSeasonAndEpisode)
 	r.Post(`/files`, ApiFilesPost)
 	r.Patch(`/files`, ApiProcessFiles)
 	r.Get(`/register`, ApiUsersRegister)

@@ -32,7 +32,7 @@ type ShowStore struct {
 
 func (store *ShowStore) GetShows() ([]*Show, error) {
 	var shows []*Show = make([]*Show, 0)
-	_, err := store.Db.Select(&shows, "select * from shows order by id desc")
+	_, err := store.Db.Select(&shows, "select * from shows where rating>0 order by id desc")
 	return shows, err
 }
 
@@ -48,14 +48,18 @@ func (store *ShowStore) GetShowOrRetrieve(showId int) (*Show, error) {
 		err = nil
 		log.Printf(" > Show does not exist locally")
 		trakt := GetTraktSession()
-		traktShow, _ := trakt.Shows().One(showId) // TODO Error
-		show.MapInfo(*traktShow)
-		// Cache
-		go func(show *Show) {
-			db := GetDbSession()
-			log.Printf("Trying to insert show:%d", show.ID)
-			db.Insert(show)
-		}(show)
+		traktShow, err := trakt.Shows().One(showId) // TODO Error
+		if err.HasError() == false {
+			show.MapInfo(*traktShow)
+			// Cache
+			go func(show *Show) {
+				db := GetDbSession()
+				log.Printf("Trying to insert show:%d", show.ID)
+				db.Insert(show)
+			}(show)
+		} else {
+			return show, err.Err
+		}
 	}
 	return show, err
 }
@@ -143,41 +147,52 @@ func (store *ShowStore) Delete(show *Show) (int, error) {
 func (store *ShowStore) GetShowOrRetrieveFromTitle(showTitle string) (*Show, error) {
 	var show *Show
 	var showMatch ShowMatch = ShowMatch{}
-	err := store.Db.SelectOne(&showMatch, "select * from shows_matches where title=?", showTitle)
+	err := store.Db.SelectOne(&showMatch, "select * from shows_matches where title=? limit 1", showTitle)
 	if err == nil && showMatch.ShowID == 0 {
-		err = errors.New("Has been cached as unmatched.")
-		log.Printf("GetShowOrRetrieveFromTitle: Show '%s' has been found in cache with showid:0 as it could notbe matched last time", showTitle)
+		showMatch.ShowID = 0
+		// err = errors.New("Has been cached as unmatched.")
+		log.Printf("GetShowOrRetrieveFromTitle: Show '%s' has been found in cache with showid:0 as it could not be matched last time", showTitle)
 
 	} else if err == nil && showMatch.ShowID > 0 {
 		show, err = store.GetShowOrRetrieve(showMatch.ShowID)
 		log.Printf("GetShowOrRetrieveFromTitle: Show '%s' has been found in cache with showid:%d", showTitle, show.ID)
+		if err != nil {
+			showMatch.ShowID = 0
+			err = nil
+		}
 
 	} else if err == sql.ErrNoRows {
 		log.Printf("GetShowOrRetrieveFromTitle: Show '%s' could not be found in cache", showTitle)
 		shows, err := ShowFindAllByName(showTitle, 1)
-		showMatchId := 0
 
-		if len(shows) == 0 {
+		if len(shows) == 0 && err == nil {
 			log.Printf("GetShowOrRetrieveFromTitle: Show '%s' could not be found in Trakt", showTitle)
-			err = errors.New("Could not be matched in Trakt")
+			showMatch.ShowID = 0
 		} else if len(shows) > 0 && err == nil {
 			show = shows[0]
-			showMatchId = show.ID
+			showMatch.ShowID = show.ID
 		} else {
+			showMatch.ShowID = 0
+			err = errors.New("Failed with matching with Trakt")
 			fmt.Println("GetShowOrRetrieveFromTitle:ShowFindAllByName>err", err)
 		}
 
 		// Cache
-		showMatch.ShowID = showMatchId
-		showMatch.Title = showTitle
-		go func(showMatch *ShowMatch) {
-			db := GetDbSession()
-			log.Printf("GetShowOrRetrieveFromTitle: Caching '%s' with showid:%d", showTitle, showMatchId)
-			db.Insert(showMatch)
-		}(&showMatch)
+		if err == nil {
+			showMatch.Title = showTitle
+			go func(showMatch *ShowMatch) {
+				db := GetDbSession()
+				log.Printf("GetShowOrRetrieveFromTitle: Caching '%s' with showid:%d", showMatch.Title, showMatch.ShowID)
+				db.Insert(showMatch)
+			}(&showMatch)
+		}
 
 	} else {
 		fmt.Println("GetShowOrRetrieveFromTitle>err", err)
+	}
+
+	if err == nil && (show == nil || show.ID == 0) {
+		err = errors.New("Could not be matched")
 	}
 	return show, err
 }

@@ -31,7 +31,7 @@ func ApiProcessFiles(userId string) {
 	db := GetDbSession()
 
 	_, err := db.Select(&userFiles, "select * from users_files where processed=0 and user_id=?", userId)
-	if err == nil {
+	if err == nil && len(userFiles) > 0 {
 		for index, userFile := range userFiles {
 			// fmt.Println(userFile, index)
 			var seriesName string
@@ -65,21 +65,21 @@ func ApiProcessFiles(userId string) {
 				seriesID = val
 			} else {
 				show, err := store.GetShowOrRetrieveFromTitle(seriesName)
-				if err == nil {
+				if err == nil && show != nil {
 					seriesIDs[seriesName] = show.ID
 					seriesID = show.ID
+					userFiles[index].ShowID = seriesID
+					userFiles[index].EpisodeID = episodeID
+					userFiles[index].SeasonID = seasonID
+					userFiles[index].Processed = true
+
+					_, err := db.Update(&userFiles[index])
+					if err != nil {
+						fmt.Println(err)
+					}
 				}
 			}
 
-			userFiles[index].ShowID = seriesID
-			userFiles[index].EpisodeID = episodeID
-			userFiles[index].SeasonID = seasonID
-			userFiles[index].Processed = true
-
-			_, err := db.Update(&userFiles[index])
-			if err != nil {
-				fmt.Println(err)
-			}
 		}
 	} else {
 		fmt.Println(err)

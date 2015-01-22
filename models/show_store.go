@@ -56,8 +56,8 @@ func (store *ShowStore) GetShowOrRetrieve(showId int) (*Show, error) {
 					log.Println("ERR:", err)
 				}
 			}(&show)
-			return &show, nil
 		}
+		return &show, nil
 	} else if err != nil {
 		return &show, err
 	}
@@ -95,8 +95,8 @@ func (store *ShowStore) GetSeasonsOrRetrieveByShowId(showId int) ([]*Season, err
 						log.Println("ERR:", err)
 					}
 				}(&season)
-				return seasons, nil
 			}
+			return seasons, nil
 		}
 	} else if err != nil {
 		return seasons, err
@@ -119,6 +119,8 @@ func (store *ShowStore) GetEpisodesOrRetrieveByShowIdAndSeason(showId int, seaso
 		trakt := GetTraktSession()
 		traktEpisodes, result := trakt.Episodes().AllBySeason(showId, seasonNumber)
 		if result.Err != nil {
+			return episodes, result.Err
+		} else {
 			for _, traktEpisode := range traktEpisodes {
 				episode := Episode{}
 				episode.MapInfo(traktEpisode)
@@ -134,13 +136,13 @@ func (store *ShowStore) GetEpisodesOrRetrieveByShowIdAndSeason(showId int, seaso
 						log.Println("ERR:", err)
 					}
 				}(&episode)
-				return episodes, nil
 			}
+			return episodes, nil
 		}
 	} else if err != nil {
 		return episodes, err
 	}
-	return episodes, err
+	return episodes, nil
 }
 
 func (store *ShowStore) GetEpisodeOrRetrieveByShowIdAndSeasonAndEpisode(showId int, seasonNumber int, episodeNumber int) (*Episode, error) {

@@ -15,7 +15,6 @@ type Model interface {
 // The Store interface defines methods to manipulate items.
 type Store interface {
 	GetShows() ([]*Show, error)
-	GetShow(id int) (*Show, error)
 	GetShowOrRetrieve(id int) (*Show, error)
 	GetSeasonsByShowId(id int) ([]*Season, error)
 	GetSeasonsOrRetrieveByShowId(id int) ([]*Season, error)
@@ -37,32 +36,32 @@ func (store *ShowStore) GetShows() ([]*Show, error) {
 	return shows, err
 }
 
-func (store *ShowStore) GetShow(showId int) (*Show, error) {
+func (store *ShowStore) GetShowOrRetrieve(showId int) (*Show, error) {
 	var show Show = Show{}
 	err := store.Db.SelectOne(&show, "select * from shows where id=?", showId)
-	return &show, err
-}
-
-func (store *ShowStore) GetShowOrRetrieve(showId int) (*Show, error) {
-	show, err := store.GetShow(showId)
 	if err == sql.ErrNoRows {
-		err = nil
 		log.Printf(" > Show does not exist locally")
 		trakt := GetTraktSession()
-		traktShow, err := trakt.Shows().One(showId) // TODO Error
-		if err.HasError() == false {
+		traktShow, result := trakt.Shows().One(showId)
+		if result.Err != nil {
+			return &show, result.Err
+		} else {
 			show.MapInfo(*traktShow)
 			// Cache
 			go func(show *Show) {
 				db := GetDbSession()
 				log.Printf("Trying to insert show:%d", show.ID)
-				db.Insert(show)
-			}(show)
-		} else {
-			return show, err.Err
+				err := db.Insert(show)
+				if err != nil {
+					log.Println("ERR:", err)
+				}
+			}(&show)
+			return &show, nil
 		}
+	} else if err != nil {
+		return &show, err
 	}
-	return show, err
+	return &show, nil
 }
 
 func (store *ShowStore) GetSeasonsByShowId(showId int) ([]*Season, error) {
@@ -78,8 +77,10 @@ func (store *ShowStore) GetSeasonsOrRetrieveByShowId(showId int) ([]*Season, err
 	if err == sql.ErrNoRows || len(seasons) == 0 {
 		log.Printf(" > Show's seasons do not exist locally")
 		trakt := GetTraktSession()
-		traktSeasons, err := trakt.Seasons().All(showId)
-		if err.HasError() == false {
+		traktSeasons, result := trakt.Seasons().All(showId)
+		if result.Err != nil {
+			return seasons, result.Err
+		} else {
 			for _, traktSeason := range traktSeasons {
 				season := Season{}
 				season.MapInfo(traktSeason)
@@ -89,15 +90,18 @@ func (store *ShowStore) GetSeasonsOrRetrieveByShowId(showId int) ([]*Season, err
 				go func(season *Season) {
 					db := GetDbSession()
 					log.Printf("Trying to insert season:%d:%d", season.ShowID, season.Season)
-					db.Insert(season)
+					err := db.Insert(season)
+					if err != nil {
+						log.Println("ERR:", err)
+					}
 				}(&season)
+				return seasons, nil
 			}
 		}
 	} else if err != nil {
-		log.Println("TODO error", err)
 		return seasons, err
 	}
-	return seasons, err
+	return seasons, nil
 }
 
 func (store *ShowStore) GetEpisodesByShowIdAndSeason(showId int, seasonNumber int) ([]*Episode, error) {
@@ -113,8 +117,8 @@ func (store *ShowStore) GetEpisodesOrRetrieveByShowIdAndSeason(showId int, seaso
 	if err == sql.ErrNoRows || len(episodes) == 0 {
 		log.Printf(" > Show's episodes do not exist locally")
 		trakt := GetTraktSession()
-		traktEpisodes, err := trakt.Episodes().AllBySeason(showId, seasonNumber)
-		if err.HasError() == false {
+		traktEpisodes, result := trakt.Episodes().AllBySeason(showId, seasonNumber)
+		if result.Err != nil {
 			for _, traktEpisode := range traktEpisodes {
 				episode := Episode{}
 				episode.MapInfo(traktEpisode)
@@ -125,12 +129,15 @@ func (store *ShowStore) GetEpisodesOrRetrieveByShowIdAndSeason(showId int, seaso
 				go func(episode *Episode) {
 					db := GetDbSession()
 					log.Printf("Trying to insert episode:%d:%d:%d", episode.ShowID, episode.Season, episode.Episode)
-					db.Insert(episode)
+					err := db.Insert(episode)
+					if err != nil {
+						log.Println("ERR:", err)
+					}
 				}(&episode)
+				return episodes, nil
 			}
 		}
 	} else if err != nil {
-		log.Println("TODO error", err)
 		return episodes, err
 	}
 	return episodes, err
@@ -138,7 +145,7 @@ func (store *ShowStore) GetEpisodesOrRetrieveByShowIdAndSeason(showId int, seaso
 
 func (store *ShowStore) GetEpisodeOrRetrieveByShowIdAndSeasonAndEpisode(showId int, seasonNumber int, episodeNumber int) (*Episode, error) {
 	log.Printf("Trying to retrieve episodes for showid:%d season:%d episode:%d\n", showId, seasonNumber, episodeNumber)
-	var episode *Episode
+	var episode Episode = Episode{}
 	err := store.Db.SelectOne(&episode, "select * from episodes where show_id=? and season=? and episode=? limit 1", showId, seasonNumber, episodeNumber)
 	if err == sql.ErrNoRows {
 		log.Printf(" > Show's episode does not exist locally")
@@ -162,9 +169,9 @@ func (store *ShowStore) GetEpisodeOrRetrieveByShowIdAndSeasonAndEpisode(showId i
 		// }
 	} else if err != nil {
 		log.Println("TODO error", err)
-		return episode, err
+		return &episode, err
 	}
-	return episode, err
+	return &episode, nil
 }
 
 // Deletes removes Show and returns count of removed records

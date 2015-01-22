@@ -209,6 +209,11 @@ func (store *ShowStore) GetShowOrRetrieveFromTitle(showTitle string) (*Show, err
 			showMatch.ShowID = 0
 		} else if len(shows) > 0 && err == nil {
 			show = shows[0]
+			for show_i, show_r := range shows {
+				if show_r.Rating > show.Rating {
+					show = shows[show_i]
+				}
+			}
 			showMatch.ShowID = show.ID
 		} else {
 			showMatch.ShowID = 0
@@ -251,7 +256,7 @@ func ShowFindAllByName(name string, maxResults int) ([]*Show, error) {
 			// so season and episodes were missing a lot of data.
 			// newShow, err := store.GetOrRetrieveByTraktShow(&traktShow)
 			newShow, err := store.GetShowOrRetrieve(traktShow.Show.Ids.Trakt)
-			if err == nil && newShow.TraktID > 0 {
+			if err == nil && newShow.TraktID > 0 && newShow.TvdbID > 0 && newShow.ImdbID != "" && newShow.Rating > 0 {
 				shows = append(shows, newShow)
 			}
 		}

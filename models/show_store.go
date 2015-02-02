@@ -253,11 +253,11 @@ func ShowFindAllByName(name string, maxResults int) ([]*Show, error) {
 	}
 	for _, traktShow := range showResults {
 		// TODO: Add additional checks
-		if traktShow.Show.Title != "" && traktShow.Show.Ids.Imdb != "" {
+		if traktShow.Show.Title != "" && traktShow.Show.IDs.Imdb != "" {
 			// TODO Currently the api doesn't support properly getting extended info on search
 			// so season and episodes were missing a lot of data.
 			// newShow, err := store.GetOrRetrieveByTraktShow(&traktShow)
-			newShow, err := store.GetShowOrRetrieve(traktShow.Show.Ids.Trakt)
+			newShow, err := store.GetShowOrRetrieve(traktShow.Show.IDs.Trakt)
 			if err == nil && newShow.TraktID > 0 && newShow.TvdbID > 0 && newShow.ImdbID != "" && newShow.Rating > 0 {
 				shows = append(shows, newShow)
 			}

@@ -23,10 +23,10 @@ type Season struct {
 
 func (s *Season) MapInfo(traktSeason trakt.Season) {
 	// s.ID = traktSeason.Ids.Tvdb
-	s.TmdbID = traktSeason.Ids.Tmdb
-	s.TraktID = traktSeason.Ids.Trakt
-	s.TvdbID = traktSeason.Ids.Tvdb
-	s.TvrageID = traktSeason.Ids.Tvrage
+	s.TmdbID = traktSeason.IDs.Tmdb
+	s.TraktID = traktSeason.IDs.Trakt
+	s.TvdbID = traktSeason.IDs.Tvdb
+	s.TvrageID = traktSeason.IDs.Tvrage
 	s.EpisodeCount = traktSeason.EpisodeCount
 	s.ImagesPosterFull = traktSeason.Images.Poster.Full
 	s.ImagesPosterMedium = traktSeason.Images.Poster.Medium

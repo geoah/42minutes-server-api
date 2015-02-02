@@ -51,11 +51,11 @@ type Show struct {
 }
 
 func (s *Show) MapInfo(traktShow trakt.Show) {
-	s.ID = traktShow.Ids.Trakt
-	s.TmdbID = traktShow.Ids.Tmdb
-	s.TraktID = traktShow.Ids.Trakt
-	s.TvdbID = traktShow.Ids.Tvdb
-	s.TvrageID = traktShow.Ids.Tvrage
+	s.ID = traktShow.IDs.Trakt
+	s.TmdbID = traktShow.IDs.Tmdb
+	s.TraktID = traktShow.IDs.Trakt
+	s.TvdbID = traktShow.IDs.Tvdb
+	s.TvrageID = traktShow.IDs.Tvrage
 	s.AirDay = traktShow.Airs.Day
 	s.AirTime = traktShow.Airs.Time
 	s.AirTimezone = traktShow.Airs.Timezone
@@ -74,13 +74,13 @@ func (s *Show) MapInfo(traktShow trakt.Show) {
 	s.ImagePosterMedium = traktShow.Images.Poster.Medium
 	s.ImagePosterThumb = traktShow.Images.Poster.Thumb
 	s.ImageThumbFull = traktShow.Images.Thumb.Full
-	s.ImdbID = traktShow.Ids.Imdb
+	s.ImdbID = traktShow.IDs.Imdb
 	s.Language = traktShow.Language
 	s.Network = traktShow.Network
 	s.Overview = traktShow.Overview
 	s.Rating = traktShow.Rating
 	s.Runtime = traktShow.Runtime
-	s.Slug = traktShow.Ids.Slug
+	s.Slug = traktShow.IDs.Slug
 	s.Status = traktShow.Status
 	s.Title = traktShow.Title
 	s.Trailer = traktShow.Trailer

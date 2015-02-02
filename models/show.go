@@ -46,6 +46,7 @@ type Show struct {
 	Year              int     `json:"year" db:"year"`
 	Favorite          bool    `json:"favorite" db:"-"`
 	Library           bool    `json:"library" db:"-"`
+	LibraryEpisodes   int     `json:"library_episodes" db:"-"`
 	// Seasons           []Season `json:"seasons" db:"-"`
 }
 
@@ -116,6 +117,13 @@ func (s *Show) Personalize(userID string) {
 	if err == nil {
 		s.Favorite = userShow.Favorite
 		s.Library = userShow.Library
+		count, err := db.SelectInt("select count(*) from users_files where user_id=? and show_id=?", userID, s.ID)
+		if err == nil {
+			log.Println("C:", count)
+			s.LibraryEpisodes = int(count)
+		} else {
+			log.Println(err)
+		}
 	}
 }
 

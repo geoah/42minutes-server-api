@@ -16,7 +16,7 @@ func ApiEpisodesGetAllByShowAndSeason(r *http.Request, enc encoder.Encoder, stor
 	if errShow != nil || errSeason != nil {
 		return http.StatusBadRequest, encoder.Must(enc.Encode("Missing show_id or season"))
 	} else {
-		seasons, err := store.GetEpisodesOrRetrieveByShowIdAndSeason(showId, seasonNumber)
+		episodes, err := store.GetEpisodesOrRetrieveByShowIdAndSeason(showId, seasonNumber)
 		if err != nil {
 			return http.StatusBadRequest, encoder.Must(enc.Encode(err))
 		}

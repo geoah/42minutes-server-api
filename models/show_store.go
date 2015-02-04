@@ -19,6 +19,7 @@ type Store interface {
 	GetSeasonsByShowId(id int) ([]*Season, error)
 	GetSeasonsOrRetrieveByShowId(id int) ([]*Season, error)
 	GetEpisodesByShowIdAndSeason(id int, seasonNumber int) ([]*Episode, error)
+	GetEpisodesByShowId(id int) ([]*Episode, error)
 	GetEpisodesOrRetrieveByShowIdAndSeason(id int, seasonNumber int) ([]*Episode, error)
 	GetEpisodeOrRetrieveByShowIdAndSeasonAndEpisode(id int, seasonNumber int, episodeNumber int) (*Episode, error)
 	GetShowOrRetrieveFromTitle(showName string) (*Show, error)
@@ -107,6 +108,12 @@ func (store *ShowStore) GetSeasonsOrRetrieveByShowId(showId int) ([]*Season, err
 func (store *ShowStore) GetEpisodesByShowIdAndSeason(showId int, seasonNumber int) ([]*Episode, error) {
 	var episodes []*Episode = make([]*Episode, 0)
 	_, err := store.Db.Select(&episodes, "select * from episodes where show_id=? and season=?", showId, seasonNumber)
+	return episodes, err
+}
+
+func (store *ShowStore) GetEpisodesByShowId(showId int) ([]*Episode, error) {
+	var episodes []*Episode = make([]*Episode, 0)
+	_, err := store.Db.Select(&episodes, "select * from episodes where show_id=?", showId)
 	return episodes, err
 }
 

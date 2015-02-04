@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -60,8 +61,14 @@ func init() {
 }
 
 func main() {
-	// Startup HTTP server
+	// Run show update job
+	// go func() {
+	// 	s := ShowsUpdateJob{}
+	// 	s.Run()
+	// }()
 
+	// Startup HTTP server
+	fmt.Println("Starting HTTP server")
 	port := "8000"
 	if os.Getenv("PORT") != "" {
 		port = os.Getenv("PORT")

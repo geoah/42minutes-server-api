@@ -49,6 +49,17 @@ func (e *Episode) MapInfo(traktEpisode trakt.Episode) {
 }
 
 // Personalize updates episode with additional information for a specific user
+func (s *Episode) Normalize() {
+	if s.FirstAired != nil {
+		if time.Now().Sub(*s.FirstAired).Hours() > 0 {
+			s.Status = "aired"
+		} else {
+			s.Status = "unaired"
+		}
+	}
+}
+
+// Personalize updates episode with additional information for a specific user
 func (s *Episode) Personalize(userID string) {
 	db := GetDbSession()
 	userEpisode := UserEpisode{}

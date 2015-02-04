@@ -1,8 +1,11 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 
 	"github.com/42minutes/go-trakt"
 )
@@ -125,6 +128,18 @@ func (s *Show) Personalize(userID string) {
 			log.Println(err)
 		}
 	}
+}
+
+func (s *Show) GetEztvShow() EzTvSeries {
+	url := "http://eztvapi.re/show/" + s.ImdbID
+	res, _ := http.Get(url)
+	// TODO Check for errors
+	defer res.Body.Close()
+	body, _ := ioutil.ReadAll(res.Body)
+	// TODO Check for errors
+	var ezTvSeries EzTvSeries
+	_ = json.Unmarshal(body, &ezTvSeries)
+	return ezTvSeries
 }
 
 // Get detailed information from tvdbcom

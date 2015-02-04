@@ -103,7 +103,7 @@ func ApiShowsPutOne(r *http.Request, enc encoder.Encoder, store Store, parms mar
 		return http.StatusNotFound, encoder.Must(enc.Encode(NewError(ErrCodeNotExist, "Could not decode body")))
 	}
 
-	userShow := UserShow{UserID: user.ID, ShowID: show.ID, Favorite: showPost.Favorite}
+	userShow := UserShow{UserID: user.ID, ShowID: show.ID, Favorite: showPost.Favorite, Library: showPost.Library}
 	err = store.UserShowUpsert(&userShow)
 
 	show.Personalize(user.ID)

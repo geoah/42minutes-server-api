@@ -32,7 +32,7 @@ type ShowStore struct {
 
 func (store *ShowStore) GetShows() ([]*Show, error) {
 	var shows []*Show = make([]*Show, 0)
-	_, err := store.Db.Select(&shows, "select * from shows where rating>0 order by id desc")
+	_, err := store.Db.Select(&shows, "select * from shows where rating>0 and tmdb_id>0 and tvdb_id>0 order by id desc")
 	return shows, err
 }
 

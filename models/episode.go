@@ -27,6 +27,10 @@ type Episode struct {
 	Infohash               string     `json:"infohash" db:"infohash"`
 	Available              bool       `json:"available" db:"-"`
 	Watched                bool       `json:"watched" db:"-"`
+	InfoHashSd             string     `json:"infohash_sd" db:"infohash_sd"`
+	InfoHashSd480p         string     `json:"infohash_sd480p" db:"infohash_sd480p"`
+	InfoHashHd720p         string     `json:"infohash_hd720p" db:"infohash_hd720p"`
+	Status                 string     `json:"status" db:"-"`
 }
 
 func (e *Episode) MapInfo(traktEpisode trakt.Episode) {

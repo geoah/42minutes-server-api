@@ -158,24 +158,17 @@ func (store *ShowStore) GetEpisodeOrRetrieveByShowIdAndSeasonAndEpisode(showId i
 	err := store.Db.SelectOne(&episode, "select * from episodes where show_id=? and season=? and episode=? limit 1", showId, seasonNumber, episodeNumber)
 	if err == sql.ErrNoRows {
 		log.Printf(" > Show's episode does not exist locally")
-		// TODO Cache the episode
-		// trakt := GetTraktSession()
-		// traktEpisodes, err := trakt.Episodes().AllBySeason(showId, seasonNumber)
-		// if err.HasError() == false {
-		// 	for _, traktEpisode := range traktEpisodes {
-		// 		episode := Episode{}
-		// 		episode.MapInfo(traktEpisode)
-		// 		episode.ShowID = showId
-		// 		episode.Season = seasonNumber
-		// 		episodes = append(episodes, &episode)
-		// 		// Cache
-		// 		go func(episode *Episode) {
-		// 			db := GetDbSession()
-		// 			log.Printf("Trying to insert episode:%d:%d:%d", episode.ShowID, episode.Season, episode.Episode)
-		// 			db.Insert(episode)
-		// 		}(&episode)
-		// 	}
-		// }
+		episodes, err := store.GetEpisodesOrRetrieveByShowIdAndSeason(showId, seasonNumber)
+		if err != nil {
+			return &episode, err
+		} else {
+			for _, episode_r := range episodes {
+				if episode_r.Episode == episodeNumber {
+					return episode_r, nil
+				}
+			}
+			return &episode, errors.New("Could not find episode")
+		}
 	} else if err != nil {
 		log.Println("TODO error", err)
 		return &episode, err

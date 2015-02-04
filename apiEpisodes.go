@@ -20,7 +20,10 @@ func ApiEpisodesGetAllByShowAndSeason(r *http.Request, enc encoder.Encoder, stor
 		if err != nil {
 			return http.StatusBadRequest, encoder.Must(enc.Encode(err))
 		}
-		return http.StatusOK, encoder.Must(enc.Encode(seasons))
+		for _, episode := range episodes {
+			episode.Normalize()
+		}
+		return http.StatusOK, encoder.Must(enc.Encode(episodes))
 	}
 }
 
@@ -35,6 +38,7 @@ func ApiEpisodesGetOneByShowAndSeasonAndEpisode(r *http.Request, enc encoder.Enc
 		if err != nil || episode == nil {
 			return http.StatusBadRequest, encoder.Must(enc.Encode(err))
 		}
+		episode.Normalize()
 		return http.StatusOK, encoder.Must(enc.Encode(episode))
 	}
 }

@@ -25,11 +25,7 @@ func ApiShowsGetAll(r *http.Request, enc encoder.Encoder, store Store, user User
 	} else {
 		name := r.URL.Query().Get("name")
 		fmt.Println("Looking for show...", name)
-		shows, err := ShowFindAllByName(name, 5)
-		if err != nil {
-			return http.StatusNotFound, encoder.Must(enc.Encode(
-				NewError(ErrCodeNotExist, fmt.Sprintf("TODO error"))))
-		}
+		shows, _ = ShowFindAllByName(name, 5)
 		if len(shows) == 0 {
 			return http.StatusNotFound, encoder.Must(enc.Encode(NewError(ErrCodeNotExist, fmt.Sprintf("could not find Show with name '%s'", name))))
 		}

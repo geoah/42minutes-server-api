@@ -38,6 +38,7 @@ func init() {
 	r.Post(`/files`, ApiFilesPost)
 	r.Patch(`/files`, ApiProcessFiles)
 	r.Get(`/register`, ApiUsersRegister)
+	r.Get(`/rss`, ApiRss)
 
 	// Allow CORS
 	m.Use(cors.Allow(&cors.Options{

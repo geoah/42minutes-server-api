@@ -16,6 +16,17 @@ import (
 var m *martini.Martini
 var store Store
 
+func Authenticate(w http.ResponseWriter, r *http.Request, c martini.Context, enc encoder.Encoder) {
+	db := GetDbSession()
+	token := r.Header.Get("X-API-TOKEN")
+	user := User{}
+	err := db.SelectOne(&user, "select * from users where token=?", token)
+	if err != nil {
+		http.Error(w, "Auth Error", http.StatusUnauthorized)
+	}
+	c.Map(user)
+}
+
 func init() {
 	// Initialize store
 	store = *GetStoreSession()
@@ -29,9 +40,9 @@ func init() {
 
 	// Setup routes
 	r := martini.NewRouter()
-	r.Get(`/shows`, ApiShowsGetAll)
-	r.Get(`/shows/:id`, ApiShowsGetOne)
-	r.Put(`/shows/:id`, ApiShowsPutOne)
+	r.Get(`/shows`, Authenticate, ApiShowsGetAll)
+	r.Get(`/shows/:id`, Authenticate, ApiShowsGetOne)
+	r.Put(`/shows/:id`, Authenticate, ApiShowsPutOne)
 	r.Get(`/shows/:showId/seasons`, ApiSeasonsGetAllByShow)
 	r.Get(`/shows/:showId/seasons/:seasonNumber/episodes`, ApiEpisodesGetAllByShowAndSeason)
 	r.Get(`/shows/:showId/seasons/:seasonNumber/episodes/:episodeNumber`, ApiEpisodesGetOneByShowAndSeasonAndEpisode)
@@ -55,6 +66,7 @@ func init() {
 		// Force Content-Type
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	})
+
 	// Inject database
 	m.MapTo(store, (*Store)(nil))
 	// Add the router action

@@ -13,27 +13,19 @@ import (
 	"github.com/go-martini/martini"
 )
 
-func ApiShowsGetAll(r *http.Request, enc encoder.Encoder, store Store) (int, []byte) {
+func ApiShowsGetAll(r *http.Request, enc encoder.Encoder, store Store, user User) (int, []byte) {
 	db := GetDbSession()
-
-	// TODO Replace with middleware
-	token := r.Header.Get("X-API-TOKEN")
-	user := User{}
-	err := db.SelectOne(&user, "select * from users where token=?", token)
-	if err != nil {
-		return http.StatusUnauthorized, encoder.Must(enc.Encode(NewError(ErrCodeNotExist, "Error")))
-	}
 
 	var shows []*Show
 	if r.URL.Query().Get("name") == "" {
-		_, err = db.Select(&shows, "SELECT shows.* FROM shows LEFT JOIN users_shows ON shows.id = users_shows.show_id WHERE users_shows.user_id = ? AND users_shows.library = true ORDER BY shows.title asc", user.ID)
+		_, err := db.Select(&shows, "SELECT shows.* FROM shows LEFT JOIN users_shows ON shows.id = users_shows.show_id WHERE users_shows.user_id = ? AND users_shows.library = true ORDER BY shows.title asc", user.ID)
 		if err != nil {
 			return http.StatusNotFound, encoder.Must(enc.Encode(NewError(ErrCodeNotExist, fmt.Sprintf("TODO error"))))
 		}
 	} else {
 		name := r.URL.Query().Get("name")
 		fmt.Println("Looking for show...", name)
-		shows, err = ShowFindAllByName(name, 5)
+		shows, err := ShowFindAllByName(name, 5)
 		if err != nil {
 			return http.StatusNotFound, encoder.Must(enc.Encode(
 				NewError(ErrCodeNotExist, fmt.Sprintf("TODO error"))))
@@ -50,20 +42,11 @@ func ApiShowsGetAll(r *http.Request, enc encoder.Encoder, store Store) (int, []b
 	return http.StatusOK, encoder.Must(enc.Encode(shows))
 }
 
-func ApiShowsGetOne(r *http.Request, enc encoder.Encoder, store Store, parms martini.Params) (int, []byte) {
-	db := GetDbSession()
+func ApiShowsGetOne(r *http.Request, enc encoder.Encoder, store Store, parms martini.Params, user User) (int, []byte) {
 
 	id, err := strconv.Atoi(parms["id"])
 	if err != nil {
 		return http.StatusBadRequest, encoder.Must(enc.Encode(err))
-	}
-
-	// TODO Replace with middleware
-	token := r.Header.Get("X-API-TOKEN")
-	user := User{}
-	err = db.SelectOne(&user, "select * from users where token=?", token)
-	if err != nil {
-		return http.StatusUnauthorized, encoder.Must(enc.Encode(NewError(ErrCodeNotExist, "Error")))
 	}
 
 	show, err := store.GetShowOrRetrieve(id)
@@ -75,9 +58,7 @@ func ApiShowsGetOne(r *http.Request, enc encoder.Encoder, store Store, parms mar
 
 }
 
-func ApiShowsPutOne(r *http.Request, enc encoder.Encoder, store Store, parms martini.Params) (int, []byte) {
-	db := GetDbSession()
-
+func ApiShowsPutOne(r *http.Request, enc encoder.Encoder, store Store, parms martini.Params, user User) (int, []byte) {
 	id, err := strconv.Atoi(parms["id"])
 	if err != nil {
 		return http.StatusBadRequest, encoder.Must(enc.Encode(err))
@@ -85,14 +66,6 @@ func ApiShowsPutOne(r *http.Request, enc encoder.Encoder, store Store, parms mar
 	show, err := store.GetShowOrRetrieve(id)
 	if err != nil {
 		return http.StatusBadRequest, encoder.Must(enc.Encode(err))
-	}
-
-	// TODO Replace with middleware
-	token := r.Header.Get("X-API-TOKEN")
-	user := User{}
-	err = db.SelectOne(&user, "select * from users where token=?", token)
-	if err != nil {
-		return http.StatusUnauthorized, encoder.Must(enc.Encode(NewError(ErrCodeNotExist, "Error")))
 	}
 
 	var showPost Show

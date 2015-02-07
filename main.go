@@ -75,10 +75,10 @@ func init() {
 
 func main() {
 	// Run show update job
-	// go func() {
-	// 	s := ShowsUpdateJob{}
-	// 	s.Run()
-	// }()
+	go func() {
+		s := ShowsUpdateJob{}
+		s.Run()
+	}()
 
 	// Startup HTTP server
 	fmt.Println("Starting HTTP server")

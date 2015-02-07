@@ -18,7 +18,7 @@ func ApiShowsGetAll(r *http.Request, enc encoder.Encoder, store Store, user User
 
 	var shows []*Show
 	if r.URL.Query().Get("name") == "" {
-		_, err := db.Select(&shows, "SELECT shows.* FROM shows LEFT JOIN users_shows ON shows.id = users_shows.show_id WHERE users_shows.user_id = ? AND users_shows.library = true ORDER BY shows.title asc", user.ID)
+		_, err := db.Select(&shows, "SELECT shows.* FROM shows LEFT JOIN users_shows ON shows.id = users_shows.show_id WHERE users_shows.user_id = ? AND (users_shows.favorite = true OR users_shows.library = true) ORDER BY shows.title asc", user.ID)
 		if err != nil {
 			return http.StatusNotFound, encoder.Must(enc.Encode(NewError(ErrCodeNotExist, fmt.Sprintf("TODO error"))))
 		}

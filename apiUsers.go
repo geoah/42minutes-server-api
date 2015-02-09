@@ -3,14 +3,16 @@ package main
 import (
 	"crypto/sha1"
 	"encoding/base64"
-	"fmt"
+	"encoding/json"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+
 	. "github.com/42minutes/42minutes-server-api/models"
 	"github.com/codegangsta/martini-contrib/encoder"
 	_ "github.com/garfunkel/go-tvdb"
 	"github.com/twinj/uuid"
-	"log"
-	"net/http"
-	"os"
 )
 
 func sha1Password(pass string) string {
@@ -38,19 +40,35 @@ func ApiUsersRegister(r *http.Request, enc encoder.Encoder, store Store) (int, [
 }
 
 func ApiUsersLogin(r *http.Request, enc encoder.Encoder, store Store) (int, []byte) {
-	email := r.FormValue("email")
-	pass := r.FormValue("password")
+
+	type UserLoginRequest struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	var ulRequest UserLoginRequest
+	body, _ := ioutil.ReadAll(r.Body)
+	r.Body.Close()
+	err := json.Unmarshal(body, &ulRequest)
+	if err != nil {
+		return http.StatusNotFound, encoder.Must(enc.Encode(NewError(ErrCodeNotExist, "Could not decode body")))
+	}
+
+	email := ulRequest.Email
+	pass := ulRequest.Password
 	if email != "" && pass != "" {
 		db := GetDbSession()
 		user := User{}
 		passHash := sha1Password(pass)
 		err := db.SelectOne(&user, "select * from users where email=? and password=? ", email, passHash)
 		if err == nil {
-			user.Token = uuid.Formatter(uuid.NewV4(), uuid.CleanHyphen)
-			_, err := db.Update(&user)
-			if err == nil {
-				return http.StatusOK, encoder.Must(enc.Encode(user.Token))
-			}
+			// TODO Create new token and store it some place
+			// But for now simply return the existing token
+			// user.Token = uuid.Formatter(uuid.NewV4(), uuid.CleanHyphen)
+			// _, err := db.Update(&user)
+			// if err == nil {
+			return http.StatusOK, encoder.Must(enc.Encode(user))
+			// }
 		} else {
 			return http.StatusBadRequest, encoder.Must(enc.Encode("Wrong email or password"))
 		}
